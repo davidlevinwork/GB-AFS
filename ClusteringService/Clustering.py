@@ -23,8 +23,11 @@ class ClusteringService:
             # Wait for the tasks to complete and store the results
             for task in concurrent.futures.as_completed(tasks):
                 results.append(task.result())
+
+        results = self.arrange_results(results)
+
         end = time.time()
-        self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{end - start}]')
+        self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end-start, 3)}]')
         return results
 
     @staticmethod
@@ -87,6 +90,18 @@ class ClusteringService:
             silhouette_results['simplified_improved_silhouette'] = simplified_silhouette(X, y, centroids, mode='improved')
 
         return silhouette_results
+
+    def arrange_results(self, results: list) -> list:
+        sorted_results = sorted(results, key=lambda x: x['k'])
+        for result in sorted_results:
+            k = result['k']
+            sil_log_str = ''
+            for sil_name, sil_value in result['silhouette'].items():
+                sil_log_str += f'({sil_name}) - ({sil_value}), '
+            self.log_service.log('Info', f'[Clustering Service] : Silhouette values for (K={k}) * {sil_log_str[:-2]}')
+
+        return sorted_results
+
 
     @staticmethod
     def is_new_single_centroid(y: pd.DataFrame, number_of_single_centroids: int) -> bool:

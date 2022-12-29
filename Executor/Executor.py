@@ -2,6 +2,7 @@ from DataService import Data
 from LogService import Log
 from ClusteringService import Clustering
 from VisualizationService import Visualization
+from ClassificationService import Classification
 from FeatureSimilarityService import FeatureSimilarity
 from DimensionReductionService import DimensionReduction
 
@@ -12,6 +13,7 @@ class Executor:
         self.data_service = None
         self.clustering_service = None
         self.visualization_service = None
+        self.classification_service = None
         self.feature_similarity_service = None
         self.dimension_reduction_service = None
 
@@ -20,6 +22,7 @@ class Executor:
         self.data_service = Data.DataService(self.log_service)
         self.clustering_service = Clustering.ClusteringService(self.log_service)
         self.visualization_service = Visualization.VisualizationService(self.log_service)
+        self.classification_service = Classification.ClassificationService(self.log_service)
         self.feature_similarity_service = FeatureSimilarity.FeatureSimilarityService(self.log_service)
         self.dimension_reduction_service = DimensionReduction.DimensionReductionService(self.log_service)
 
@@ -33,4 +36,11 @@ class Executor:
 
         clustering_res = self.clustering_service.execute_clustering_service(F_reduced, len(data['features']))
 
-        x = 5
+        classification_train_res = self.classification_service.execute_classification_service(X=data['train'][1],
+                                                                                              y=data['train'][2],
+                                                                                              F=F_reduced,
+                                                                                              results=clustering_res,
+                                                                                              features=list(data['features']),
+                                                                                              n_features=len(data['features']),
+                                                                                              mode='Train')
+

@@ -24,7 +24,7 @@ class DataService:
         end = time.time()
         self.log_service.log('Info', f'[Data Service] : Data set name: ({data_set}.csv) * Number of features: '
                                      f'({len(results["features"])}) * Number of labels: ({len(results["labels"])})')
-        self.log_service.log('Debug', f'[Data Service] : Total run time in seconds: [{end - start}]')
+        self.log_service.log('Debug', f'[Data Service] : Total run time in seconds: [{round(end-start, 3)}]')
         return results
 
     @staticmethod

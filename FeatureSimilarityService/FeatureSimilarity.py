@@ -21,7 +21,8 @@ class FeatureSimilarityService:
                                          f'feature ({feature}), index ({i + 1})')
 
         end = time.time()
-        self.log_service.log('Debug', f'[Feature Similarity Service] : Total run time in seconds: [{end - start}]')
+        self.log_service.log('Debug', f'[Feature Similarity Service] : Total run time in seconds: '
+                                      f'[{round(end-start, 3)}]')
         return separation_matrix
 
     @staticmethod

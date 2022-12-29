@@ -34,5 +34,6 @@ class DimensionReductionService:
         end = time.time()
         self.log_service.log('Info', f'[Dimension Reduction Service] : Number of components: ({n_components}) * '
                                      f'Perplexity: ({perplexity}) * Number of iterations: ({n_iter})')
-        self.log_service.log('Debug', f'[Dimension Reduction Service] : Total run time in seconds: [{end - start}]')
+        self.log_service.log('Debug', f'[Dimension Reduction Service] : Total run time in seconds: '
+                                      f'[{round(end-start, 3)}]')
         return F_reduced
