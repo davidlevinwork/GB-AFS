@@ -3,6 +3,24 @@ from sklearn.model_selection import train_test_split
 
 
 class DataService:
+    def __init__(self, log_service):
+        self.log_service = log_service
+
+    @staticmethod
+    def execute_data_service(data_set: str) -> dict:
+        results = {}
+
+        results['dataset'] = DataService.load_data(data_set)
+
+        train, test = DataService.train_test_split(results['dataset'])
+        results['train'] = train
+        results['test'] = test
+
+        results['features'] = DataService.get_features(results['train'][1])
+        results['labels'] = DataService.get_labels(results['train'][2])
+
+        return results
+
     @staticmethod
     def load_data(data_set: str) -> pd.DataFrame:
         """Load data
@@ -17,7 +35,7 @@ class DataService:
         pandas.DataFrame
             Processed data as a data frame.
         """
-        df = pd.DataFrame(pd.read_csv(f'./Data/{data_set}.csv'))
+        df = pd.DataFrame(pd.read_csv(f'./Datasets/{data_set}.csv'))
         return df
 
     @staticmethod
@@ -45,10 +63,10 @@ class DataService:
         X_test = test.drop('class', axis=1)
         y_test = pd.DataFrame(test['class'])
 
-        return (X_train, y_train), (X_test, y_test)
+        return (train, X_train, y_train), (test, X_test, y_test)
 
     @staticmethod
-    def get_features(X: pd.DataFrame) -> pd.DataFrame:
+    def get_features(X: pd.DataFrame) ->  pd.DataFrame:
         """Extract features names
 
         Parameters
@@ -61,8 +79,7 @@ class DataService:
         pandas.DataFrame
             Features names of the given data set.
         """
-        features_names = X.drop('class', axis=1)
-        return features_names
+        return X.columns
 
     @staticmethod
     def get_labels(X: pd.DataFrame) -> pd.DataFrame:
