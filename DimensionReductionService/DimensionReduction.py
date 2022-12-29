@@ -3,8 +3,10 @@ from sklearn.manifold import TSNE
 
 
 class DimensionReductionService:
-    @staticmethod
-    def tsne(F: pd.DataFrame, n_components: int = 2, perplexity: int = 30, n_iter: int = 1000) -> pd.DataFrame:
+    def __init__(self, log_service):
+        self.log_service = log_service
+
+    def tsne(self, F: pd.DataFrame, n_components: int = 2, perplexity: int = 30, n_iter: int = 1000) -> pd.DataFrame:
         """Perform dimension reduction using the TSNE algorithm
 
         Parameters

@@ -1,14 +1,17 @@
 import math
 import numpy as np
 import pandas as pd
-from Distances import get_distance
+from FeatureSimilarityService.Distances import get_distance
 
 
 class FeatureSimilarityService:
+    def __init__(self, log_service):
+        self.log_service = log_service
+
     @staticmethod
-    def calculate_separation_matrix(self, X: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame, distance_measure: str) -> np.ndarray:
-        label_combinations = self.get_label_combinations(labels)
-        separation_matrix = self.init_feature_separation_matrix(features, labels)
+    def calculate_separation_matrix(X: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame, distance_measure: str) -> np.ndarray:
+        label_combinations = FeatureSimilarityService.get_label_combinations(labels)
+        separation_matrix = FeatureSimilarityService.init_feature_separation_matrix(features, labels)
 
         for i, feature in enumerate(features):                                      # Iterate over the features
             for j, labels in enumerate(label_combinations):                         # Iterate over each pairs of classes
