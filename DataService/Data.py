@@ -1,3 +1,4 @@
+import time
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -6,8 +7,9 @@ class DataService:
     def __init__(self, log_service):
         self.log_service = log_service
 
-    @staticmethod
-    def execute_data_service(data_set: str) -> dict:
+    def execute_data_service(self, data_set: str) -> dict:
+        start = time.time()
+
         results = {}
 
         results['dataset'] = DataService.load_data(data_set)
@@ -19,6 +21,10 @@ class DataService:
         results['features'] = DataService.get_features(results['train'][1])
         results['labels'] = DataService.get_labels(results['train'][2])
 
+        end = time.time()
+        self.log_service.log('Info', f'[Data Service] : Data set name: ({data_set}.csv) * Number of features: '
+                                     f'({len(results["features"])}) * Number of labels: ({len(results["labels"])})')
+        self.log_service.log('Debug', f'[Data Service] : Total run time in seconds: [{end - start}]')
         return results
 
     @staticmethod
@@ -66,7 +72,7 @@ class DataService:
         return (train, X_train, y_train), (test, X_test, y_test)
 
     @staticmethod
-    def get_features(X: pd.DataFrame) ->  pd.DataFrame:
+    def get_features(X: pd.DataFrame) -> pd.DataFrame:
         """Extract features names
 
         Parameters

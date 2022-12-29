@@ -1,1 +1,27 @@
-[ 29/12/2022 20:29:36 ] | [  Info   ] : blabla
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Data Service] : Data set name: (Cardiotocography) * Number of features: (22) * Number of labels: (10)
+[ 29/12/2022 20:58:36 ] | [  Debug  ] : [Data Service] : Total run time in seconds: [0.0]
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (LB), index (1)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (AC), index (2)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (FM), index (3)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (UC), index (4)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (ASTV), index (5)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (MSTV), index (6)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (ALTV), index (7)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (MLTV), index (8)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (DL), index (9)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (DS), index (10)
+[ 29/12/2022 20:58:36 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (DP), index (11)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (DR), index (12)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Width), index (13)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Min), index (14)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Max), index (15)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Nmax), index (16)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Nzeros), index (17)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Mode), index (18)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Mean), index (19)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Median), index (20)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Variance), index (21)
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Feature Similarity Service] : Finish to compute separation value of feature (Tendency), index (22)
+[ 29/12/2022 20:58:37 ] | [  Debug  ] : [Feature Similarity Service] : Total run time in seconds: [1.166184663772583]
+[ 29/12/2022 20:58:37 ] | [  Info   ] : [Dimension Reduction Service] : Number of components: (2) * Perplexity: (15.0) * Number of iterations: (1000)
+[ 29/12/2022 20:58:37 ] | [  Debug  ] : [Dimension Reduction Service] : Total run time in seconds: [0.3164634704589844]

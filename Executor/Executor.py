@@ -17,14 +17,14 @@ class Executor:
 
     def init_services(self):
         self.log_service = Log.LogService()
-        self.data_service = Data.DataService()
-        self.clustering_service = Clustering.ClusteringService()
-        self.visualization_service = Visualization.VisualizationService()
-        self.feature_similarity_service = FeatureSimilarity.FeatureSimilarityService()
+        self.data_service = Data.DataService(self.log_service)
+        self.clustering_service = Clustering.ClusteringService(self.log_service)
+        self.visualization_service = Visualization.VisualizationService(self.log_service)
+        self.feature_similarity_service = FeatureSimilarity.FeatureSimilarityService(self.log_service)
         self.dimension_reduction_service = DimensionReduction.DimensionReductionService(self.log_service)
 
     def execute(self):
-        data = self.data_service.execute_clustering_service('Cardiotocography')
+        data = self.data_service.execute_data_service('Cardiotocography')
 
         F = self.feature_similarity_service.calculate_separation_matrix(X=data['train'][0], features=data['features'],
                                                                         labels=data['labels'],

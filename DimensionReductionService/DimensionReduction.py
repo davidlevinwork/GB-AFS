@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 from sklearn.manifold import TSNE
 
@@ -25,6 +27,12 @@ class DimensionReductionService:
         pandas.DataFrame
             Reduced matrix F
         """
+        start = time.time()
         tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter)
         F_reduced = tsne.fit_transform(F)
+
+        end = time.time()
+        self.log_service.log('Info', f'[Dimension Reduction Service] : Number of components: ({n_components}) * '
+                                     f'Perplexity: ({perplexity}) * Number of iterations: ({n_iter})')
+        self.log_service.log('Debug', f'[Dimension Reduction Service] : Total run time in seconds: [{end - start}]')
         return F_reduced

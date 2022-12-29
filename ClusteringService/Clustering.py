@@ -11,8 +11,7 @@ class ClusteringService:
     def __init__(self, log_service):
         self.log_service = log_service
 
-    @staticmethod
-    def execute_clustering_service(F: pd.DataFrame, n_features: int):
+    def execute_clustering_service(self, F: pd.DataFrame, n_features: int):
         start = time.time()
         K_values = [*range(2, n_features, 1)]
 
@@ -25,6 +24,7 @@ class ClusteringService:
             for task in concurrent.futures.as_completed(tasks):
                 results.append(task.result())
         end = time.time()
+        self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{end - start}]')
         return results
 
     @staticmethod
