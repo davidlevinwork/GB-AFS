@@ -34,13 +34,12 @@ class Executor:
                                                                         distance_measure='Jeffries-Matusita')
         F_reduced = self.dimension_reduction_service.tsne(F=F, perplexity=15.0)
 
-        clustering_res = self.clustering_service.execute_clustering_service(F_reduced, len(data['features']))
+        clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
+                                                                            n_features=len(data['features']))
 
-        classification_train_res = self.classification_service.execute_classification_service(X=data['train'][1],
-                                                                                              y=data['train'][2],
-                                                                                              F=F_reduced,
-                                                                                              results=clustering_res,
-                                                                                              features=list(data['features']),
-                                                                                              n_features=len(data['features']),
-                                                                                              mode='Train')
-
+        classification_res = self.classification_service.classify(X=data['train'][1],
+                                                                  y=data['train'][2],
+                                                                  F=F_reduced,
+                                                                  clustering_res=clustering_res,
+                                                                  features=list(data['features']),
+                                                                  n_values=5)

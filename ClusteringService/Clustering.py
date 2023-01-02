@@ -34,10 +34,10 @@ class ClusteringService:
     def execute_clustering(F: pd.DataFrame, K: int) -> dict:
         results = {}
 
-        results['k'] = K
-        results['kmedoids'] = ClusteringService.run_kmedoids(F, K)
-        results['silhouette'] = ClusteringService.calculate_silhouette_value(F, results['kmedoids']['labels'],
-                                                                             results['kmedoids']['centroids'])
+        results['K'] = K
+        results['Kmedoids'] = ClusteringService.run_kmedoids(F, K)
+        results['Silhouette'] = ClusteringService.calculate_silhouette_value(F, results['Kmedoids']['Labels'],
+                                                                             results['Kmedoids']['Centroids'])
         # results['single_centroid'] = self.is_new_single_centroid(results['kmedoids']['labels'])
         return results
 
@@ -65,8 +65,8 @@ class ClusteringService:
         """
         kmedoids = KMedoids(n_clusters=K, method=method, init=init, random_state=random_state).fit(F)
         results = {
-            'labels': kmedoids.labels_,
-            'centroids': kmedoids.cluster_centers_
+            'Labels': kmedoids.labels_,
+            'Centroids': kmedoids.cluster_centers_
         }
         return results
 
@@ -79,24 +79,27 @@ class ClusteringService:
         silhouette_results = {}
 
         if silhouette:
-            silhouette_results['silhouette'] = silhouette_score(X, y)
+            silhouette_results['Silhouette'] = silhouette_score(X, y)
         if heuristic_silhouette:
-            silhouette_results['heuristic_silhouette'] = heuristic_silhouette_value(X, y)
+            silhouette_results['Heuristic Silhouette'] = heuristic_silhouette_value(X, y)
         if simplified_regular_silhouette:
-            silhouette_results['simplified_regular_silhouette'] = simplified_silhouette(X, y, centroids, mode='regular')
+            silhouette_results['Simplified Regular Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                        mode='regular')
         if simplified_heuristic_silhouette:
-            silhouette_results['simplified_heuristic_silhouette'] = simplified_silhouette(X, y, centroids, mode='heuristic')
+            silhouette_results['Simplified Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                          mode='heuristic')
         if simplified_improved_silhouette:
-            silhouette_results['simplified_improved_silhouette'] = simplified_silhouette(X, y, centroids, mode='improved')
+            silhouette_results['Simplified Improved Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                         mode='improved')
 
         return silhouette_results
 
     def arrange_results(self, results: list) -> list:
-        sorted_results = sorted(results, key=lambda x: x['k'])
+        sorted_results = sorted(results, key=lambda x: x['K'])
         for result in sorted_results:
-            k = result['k']
+            k = result['K']
             sil_log_str = ''
-            for sil_name, sil_value in result['silhouette'].items():
+            for sil_name, sil_value in result['Silhouette'].items():
                 sil_log_str += f'({sil_name}) - ({round(sil_value, 3)}), '
             self.log_service.log('Info', f'[Clustering Service] : Silhouette values for (K={k}) * {sil_log_str[:-2]}')
 
