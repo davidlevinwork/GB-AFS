@@ -97,7 +97,7 @@ class ClusteringService:
             k = result['k']
             sil_log_str = ''
             for sil_name, sil_value in result['silhouette'].items():
-                sil_log_str += f'({sil_name}) - ({sil_value}), '
+                sil_log_str += f'({sil_name}) - ({round(sil_value, 3)}), '
             self.log_service.log('Info', f'[Clustering Service] : Silhouette values for (K={k}) * {sil_log_str[:-2]}')
 
         return sorted_results
