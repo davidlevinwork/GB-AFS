@@ -10,7 +10,8 @@ class FeatureSimilarityService:
         self.log_service = log_service
         self.visualization_service = visualization_service
 
-    def calculate_separation_matrix(self, X: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame, distance_measure: str) -> np.ndarray:
+    def calculate_separation_matrix(self, X: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame,
+                                    distance_measure: str) -> np.ndarray:
         start = time.time()
         label_combinations = FeatureSimilarityService.get_label_combinations(labels)
         separation_matrix = FeatureSimilarityService.init_feature_separation_matrix(features, labels)

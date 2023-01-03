@@ -30,7 +30,7 @@ class Executor:
                                                                                         self.visualization_service)
 
     def execute(self):
-        data = self.data_service.execute_data_service('Cardiotocography')
+        data = self.data_service.execute_data_service('Music_Genre_Classification')
 
         F = self.feature_similarity_service.calculate_separation_matrix(X=data['train'][0], features=data['features'],
                                                                         labels=data['labels'],
