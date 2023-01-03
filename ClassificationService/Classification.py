@@ -25,11 +25,13 @@ class ClassificationService:
                  n_values: int) -> dict:
         # Train
         K_values = [*range(2, len(features), 1)]
-        train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, "Train")
+        train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Train')
+        self.visualization_service.plot_accuracy_to_silhouette(train_res, clustering_res, 'Jeffries-Matusita', 'Train')
 
         # Test
         K_values = self.choose_K_test_values(train_res['Results By Accuracy'], len(features), n_values)
-        test_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, "Test")
+        test_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Test')
+        self.visualization_service.plot_accuracy_to_silhouette(test_res, clustering_res, 'Jeffries-Matusita', 'Test')
 
         return {
             "Train": train_res,
@@ -129,7 +131,7 @@ class ClassificationService:
                 for c, res in classification_results.items():
                     if c == classifier:
                         classifiers_res[K] = res
-            new_results[classifier] = classifiers_res
+            new_results[classifier] = dict(sorted(classifiers_res.items(), key=lambda item: item[0]))
 
         return new_results
 

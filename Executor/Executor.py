@@ -35,7 +35,7 @@ class Executor:
         F = self.feature_similarity_service.calculate_separation_matrix(X=data['train'][0], features=data['features'],
                                                                         labels=data['labels'],
                                                                         distance_measure='Jeffries-Matusita')
-        F_reduced = self.dimension_reduction_service.tsne(F=F, perplexity=15.0)
+        F_reduced = self.dimension_reduction_service.tsne(F=F, perplexity=10.0)
 
         clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
                                                                             n_features=len(data['features']))

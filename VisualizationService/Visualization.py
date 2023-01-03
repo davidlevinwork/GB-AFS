@@ -3,10 +3,10 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
 
 dt = datetime.now()
 time_stamp = datetime.timestamp(dt)
-COLORS = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
 
 
 class VisualizationService:
@@ -45,11 +45,13 @@ class VisualizationService:
         try:
             plt.clf()
             plt.figure(figsize=(10, 8))
+            color = iter(cm.rainbow(np.linspace(0, 1, len(clustering_results[0]['Silhouette'].keys()))))
 
-            for sil_type in list(clustering_results[0]['Silhouette'].keys()):
+            for i, sil_type in enumerate(list(clustering_results[0]['Silhouette'].keys())):
+                c = next(color)
                 k_values = [res['K'] for res in clustering_results]
                 sil_values = [res['Silhouette'][sil_type] for res in clustering_results]
-                plt.plot(k_values, sil_values, label=sil_type, linestyle="solid")
+                plt.plot(k_values, sil_values, label=sil_type, linestyle="solid", c=c)
 
             plt.legend()
             self.save_plot(plt, 'Silhouette', f'Silhouette Graph - [{distance_measure}]')
@@ -80,3 +82,38 @@ class VisualizationService:
 
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
+
+    def plot_accuracy_to_silhouette(self, classification_results: dict, clustering_results: list, distance_measure: str,
+                                    mode: str, sil_min: int = 0.0, sil_max: int = 1.0, acc_min: int = 0.0,
+                                    acc_max: int = 1.0):
+        try:
+            plt.clf()
+            fig, ax = plt.subplots(figsize=(10, 8))
+            color = iter(cm.rainbow(np.linspace(0, 1, len(classification_results['Results By Classifiers'].keys()) +
+                                                len(clustering_results[0]['Silhouette'].keys()))))
+
+            # Left Y axis (accuracy)
+            for i, (classifier, classifier_val) in enumerate(classification_results['Results By Classifiers'].items()):
+                c = next(color)
+                ax.plot(classifier_val.keys(), classifier_val.values(), linestyle="-.", label=f'{str(classifier)}', c=c)
+
+            ax.set_xlabel("K value")
+            ax.set_ylabel("Accuracy")
+            ax.axis(ymin=acc_min, ymax=acc_max)
+            ax.legend(loc='lower right')
+
+            # Right Y axis (silhouette)
+            ax2 = ax.twinx()
+            for i, sil_type in enumerate(list(clustering_results[0]['Silhouette'].keys())):
+                c = next(color)
+                k_values = [res['K'] for res in clustering_results]
+                sil_values = [res['Silhouette'][sil_type] for res in clustering_results]
+                plt.plot(k_values, sil_values, label=sil_type, linestyle="solid", c=c)
+
+            ax2.set_ylabel("Silhouette Value")
+            ax2.axis(ymin=sil_min, ymax=sil_max)
+            ax2.legend(loc='lower left')
+
+            self.save_plot(plt, 'Accuracy', f'Accuracy-Silhouette {mode} - [{distance_measure}]')
+        except AssertionError as ex:
+            self.log_service.log('Error', f'[Visualization Service] - Failed to plot accuracy graph. Error: [{ex}]')

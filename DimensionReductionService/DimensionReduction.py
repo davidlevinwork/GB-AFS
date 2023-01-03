@@ -29,7 +29,7 @@ class DimensionReductionService:
             Reduced matrix F
         """
         start = time.time()
-        tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter)
+        tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter, random_state=42)
         F_reduced = tsne.fit_transform(F)
 
         self.visualization_service.plot_tsne(F_reduced, 'Jeffries-Matusita')
