@@ -4,8 +4,9 @@ from sklearn.model_selection import train_test_split
 
 
 class DataService:
-    def __init__(self, log_service):
+    def __init__(self, log_service, visualization_service):
         self.log_service = log_service
+        self.visualization_service = visualization_service
 
     def execute_data_service(self, data_set: str) -> dict:
         start = time.time()

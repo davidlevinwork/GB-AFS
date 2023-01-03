@@ -6,8 +6,9 @@ from FeatureSimilarityService.Distances import get_distance
 
 
 class FeatureSimilarityService:
-    def __init__(self, log_service):
+    def __init__(self, log_service, visualization_service):
         self.log_service = log_service
+        self.visualization_service = visualization_service
 
     def calculate_separation_matrix(self, X: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame, distance_measure: str) -> np.ndarray:
         start = time.time()

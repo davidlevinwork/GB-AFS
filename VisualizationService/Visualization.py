@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 
@@ -12,20 +13,19 @@ class VisualizationService:
     def __init__(self, log_service):
         self.log_service = log_service
 
-    def save_plot(self, file: plt, title: str):
+    def save_plot(self, file: plt, header: str, title: str):
         try:
             current_dir = os.path.dirname(__file__)
-            results_dir = os.path.join(current_dir, '../', 'Files/', 'Plots/', f'{time_stamp}/')
+            results_dir = os.path.join(current_dir, '../', 'Files/', 'Plots/', f'{time_stamp}', f'{header}')
 
             if not os.path.isdir(results_dir):
                 os.makedirs(results_dir)
 
-            file.savefig(results_dir + title)
+            file.savefig(os.path.join(results_dir, title))
         except AssertionError as ex:
-            self.log_service.log('Error',
-                                 f'[Visualization Service] - Failed to save plot graph as a file. Error: [{ex}]')
+            self.log_service.log('Error', f'[Visualization Service] - Failed to save plot as a file. Error: [{ex}]')
 
-    def plot_tsne(self, data, distance_measure: str):
+    def plot_tsne(self, data: np.ndarray, distance_measure: str):
         try:
             plt.clf()
             plt.figure(figsize=(10, 8))
@@ -37,7 +37,7 @@ class VisualizationService:
             plt.title(f't-SNE Result\n'
                       f'{distance_measure}')
 
-            self.save_plot(plt, f'tSNE Graph - [{distance_measure}]')
+            self.save_plot(plt, 'Dimensionality Reduction', f'tSNE Graph - [{distance_measure}]')
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot t-SNE graph. Error: [{ex}]')
 
@@ -46,36 +46,37 @@ class VisualizationService:
             plt.clf()
             plt.figure(figsize=(10, 8))
 
-            for sil_type in list(clustering_results[0]['silhouette'].keys()):
-                k_values = [res['k'] for res in clustering_results]
-                sil_values = [res['silhouette'][sil_type] for res in clustering_results]
+            for sil_type in list(clustering_results[0]['Silhouette'].keys()):
+                k_values = [res['K'] for res in clustering_results]
+                sil_values = [res['Silhouette'][sil_type] for res in clustering_results]
                 plt.plot(k_values, sil_values, label=sil_type, linestyle="solid")
 
             plt.legend()
-            # plt.show()
-            self.save_plot(plt, f'Silhouette Graph - [{distance_measure}]')
+            self.save_plot(plt, 'Silhouette', f'Silhouette Graph - [{distance_measure}]')
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot silhouette graph. Error: [{ex}]')
 
-    def plot_clustering(self, k, labels, centroids, data, distance_measure):
+    def plot_clustering(self, F: pd.DataFrame, clustering_results: list, distance_measure: str):
         try:
             plt.clf()
             plt.figure(figsize=(10, 8))
 
-            u_labels = np.unique(labels)
+            for clustering_result in clustering_results:
+                K = clustering_result['K']
+                centroids = clustering_result['Kmedoids']['Centroids']
+                labels = clustering_result['Kmedoids']['Labels']
+                u_labels = np.unique(clustering_result['Kmedoids']['Labels'])
+                for label in u_labels:
+                    plt.scatter(F[labels == label, 0], F[labels == label, 1])
 
-            for label in u_labels:
-                plt.scatter(data[labels == label, 0], data[labels == label, 1], label=label)
+                plt.scatter(centroids[:, 0], centroids[:, 1], marker='o', color='black', facecolors='none')
 
-            plt.scatter(centroids[:, 0], centroids[:, 1], s=80, marker='o', color='black', label="Centroids",
-                        facecolors='none')
-            plt.xlabel('First Dimension (x)')
-            plt.ylabel('Second Dimension (y)')
-            plt.title(f'Clustering Result for K={k}\n'
-                      f'{distance_measure}')
+                plt.xlabel('First Dimension (x)')
+                plt.ylabel('Second Dimension (y)')
+                plt.title(f'Clustering Result for K={K}\n'
+                          f'{distance_measure}')
 
-            plt.legend()
-            self.save_plot(plt, f'{k} - Clustering - [{distance_measure}]')
+                self.save_plot(plt, 'Clustering', f'Clustering for K={K} - [{distance_measure}]')
+
         except AssertionError as ex:
-            self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph for {k} clusters.'
-                                          f' Error: [{ex}]')
+            self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')

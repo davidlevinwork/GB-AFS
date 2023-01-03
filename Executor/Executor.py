@@ -19,12 +19,15 @@ class Executor:
 
     def init_services(self):
         self.log_service = Log.LogService()
-        self.data_service = Data.DataService(self.log_service)
-        self.clustering_service = Clustering.ClusteringService(self.log_service)
         self.visualization_service = Visualization.VisualizationService(self.log_service)
-        self.classification_service = Classification.ClassificationService(self.log_service)
-        self.feature_similarity_service = FeatureSimilarity.FeatureSimilarityService(self.log_service)
-        self.dimension_reduction_service = DimensionReduction.DimensionReductionService(self.log_service)
+
+        self.data_service = Data.DataService(self.log_service, self.visualization_service)
+        self.clustering_service = Clustering.ClusteringService(self.log_service, self.visualization_service)
+        self.classification_service = Classification.ClassificationService(self.log_service, self.visualization_service)
+        self.feature_similarity_service = FeatureSimilarity.FeatureSimilarityService(self.log_service,
+                                                                                     self.visualization_service)
+        self.dimension_reduction_service = DimensionReduction.DimensionReductionService(self.log_service,
+                                                                                        self.visualization_service)
 
     def execute(self):
         data = self.data_service.execute_data_service('Cardiotocography')

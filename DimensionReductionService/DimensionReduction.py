@@ -5,8 +5,9 @@ from sklearn.manifold import TSNE
 
 
 class DimensionReductionService:
-    def __init__(self, log_service):
+    def __init__(self, log_service, visualization_service):
         self.log_service = log_service
+        self.visualization_service = visualization_service
 
     def tsne(self, F: pd.DataFrame, n_components: int = 2, perplexity: int = 30, n_iter: int = 1000) -> pd.DataFrame:
         """Perform dimension reduction using the TSNE algorithm
@@ -30,6 +31,8 @@ class DimensionReductionService:
         start = time.time()
         tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter)
         F_reduced = tsne.fit_transform(F)
+
+        self.visualization_service.plot_tsne(F_reduced, 'Jeffries-Matusita')
 
         end = time.time()
         self.log_service.log('Info', f'[Dimension Reduction Service] : Number of components: ({n_components}) * '

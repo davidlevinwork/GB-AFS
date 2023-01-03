@@ -8,8 +8,9 @@ from ClusteringService.Silhouette import heuristic_silhouette_value, simplified_
 
 
 class ClusteringService:
-    def __init__(self, log_service):
+    def __init__(self, log_service, visualization_service):
         self.log_service = log_service
+        self.visualization_service = visualization_service
 
     def execute_clustering_service(self, F: pd.DataFrame, n_features: int):
         start = time.time()
@@ -25,6 +26,8 @@ class ClusteringService:
                 results.append(task.result())
 
         results = self.arrange_results(results)
+        self.visualization_service.plot_silhouette(results, 'Jeffries-Matusita')
+        self.visualization_service.plot_clustering(F, results, 'Jeffries-Matusita')
 
         end = time.time()
         self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end-start, 3)}]')

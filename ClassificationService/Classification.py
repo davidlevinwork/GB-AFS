@@ -13,8 +13,9 @@ NUMBER_OF_TRAIN_EPOCHS = 10
 
 
 class ClassificationService:
-    def __init__(self, log_service):
+    def __init__(self, log_service, visualization_service):
         self.log_service = log_service
+        self.visualization_service = visualization_service
         self.classifiers = [LogisticRegression(),
                             tree.DecisionTreeClassifier(),
                             KNeighborsClassifier(n_neighbors=5)]
