@@ -2,11 +2,16 @@ import numpy as np
 from sklearn.metrics.pairwise import distance_metrics
 
 
-def simplified_silhouette(X, labels, centroids, mode='regular', metric='euclidean'):
+def simplified_silhouette(X, labels, centroids, mode='regular', B_type='min', regularization='L0', eta=1.0,
+                          metric='euclidean'):
     """
     regular = the final mean calculation includes all the values as is (meaning with value 1) --> #1 = #clustrers
     improved = the final mean calculation includes the values as is *but* we are changing 1 to 0 (like implemented sil)
     heuristic = the final mean calculation ignore the 1 values, so we will have fewer items
+
+    L0 = no regularization
+    L1 = 1 - (a(i) / (b(i) * eta))
+    L2 = 1 - ((a(i) / b(i)) * eta * (a(i))^2)
     """
     metric = distance_metrics()[metric]
     labels_list = [*range(0, labels.shape[0], 1)]
@@ -16,14 +21,15 @@ def simplified_silhouette(X, labels, centroids, mode='regular', metric='euclidea
         x_centroid = centroids[label]
         not_x_centroid = [centroid for centroid in centroids if not np.array_equal(centroid, x_centroid)]
 
-        a.append(
-            metric(x.reshape(1, -1), x_centroid.reshape(1, -1)).item(0)
-        )
-        b.append(
-            min([metric(x.reshape(1, -1), not_x_centroid[j].reshape(1, -1)) for j in range(len(not_x_centroid))]).item(0)
-        )
+        a.append(metric(x.reshape(1, -1), x_centroid.reshape(1, -1)).item(0))
 
-    results = {}
+        if B_type == 'min':
+            b.append(min([metric(x.reshape(1, -1), not_x_centroid[j].reshape(1, -1))
+                          for j in range(len(not_x_centroid))]).item(0))
+        elif B_type == 'mean':
+            b.append(np.mean([metric(x.reshape(1, -1), not_x_centroid[j].reshape(1, -1))
+                              for j in range(len(not_x_centroid))]))
+
     if mode == 'regular':
         sil_values = (np.asarray(b) - np.asarray(a)) / np.maximum(np.asarray(a), np.asarray(b))
         return np.mean(sil_values)
@@ -37,8 +43,12 @@ def simplified_silhouette(X, labels, centroids, mode='regular', metric='euclidea
         clean_index_list = [i for i in labels_list if i not in a_zero_indexes]
         new_b = [i for j, i in enumerate(b) if j in clean_index_list]
 
-        sil_values = (np.asarray(new_b) - np.asarray(a_non_zero)) / np.maximum(np.asarray(a_non_zero), np.asarray(new_b))
-        return np.mean(sil_values)
+        sil_value = 0
+        if regularization == 'L0':
+            sil_value = 1 - (np.asarray(a_non_zero) / np.asarray(new_b))
+        if regularization == 'L1':
+            sil_value = 1 - (np.asarray(a_non_zero) / (np.asarray(new_b) * eta))
+        return np.mean(sil_value)
 
 
 def heuristic_silhouette_value(X, labels, metric='euclidean'):

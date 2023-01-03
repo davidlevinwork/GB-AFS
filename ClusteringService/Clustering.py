@@ -30,7 +30,7 @@ class ClusteringService:
         self.visualization_service.plot_clustering(F, results, 'Jeffries-Matusita')
 
         end = time.time()
-        self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end-start, 3)}]')
+        self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end - start, 3)}]')
         return results
 
     @staticmethod
@@ -45,7 +45,7 @@ class ClusteringService:
         return results
 
     @staticmethod
-    def run_kmedoids(F: pd.DataFrame, K: int, method: str = 'pam', init: str = 'k-medoids++', random_state: int = 42) -> dict:
+    def run_kmedoids(F: pd.DataFrame, K: int, method: str = 'pam', init: str = 'k-medoids++') -> dict:
         """Perform K-medoids clustering
 
         Parameters
@@ -66,7 +66,7 @@ class ClusteringService:
         Dictionary
             Cluster labels, Cluster centroids
         """
-        kmedoids = KMedoids(n_clusters=K, method=method, init=init, random_state=random_state).fit(F)
+        kmedoids = KMedoids(n_clusters=K, method=method, init=init).fit(F)
         results = {
             'Labels': kmedoids.labels_,
             'Centroids': kmedoids.cluster_centers_
@@ -76,7 +76,8 @@ class ClusteringService:
     @staticmethod
     def calculate_silhouette_value(X: pd.DataFrame, y: pd.DataFrame, centroids: array, silhouette: bool = False,
                                    heuristic_silhouette: bool = True, simplified_regular_silhouette: bool = False,
-                                   simplified_heuristic_silhouette: bool = True,
+                                   simplified_min_heuristic_silhouette: bool = True,
+                                   simplified_mean_heuristic_silhouette: bool = True,
                                    simplified_improved_silhouette: bool = False) -> dict:
 
         silhouette_results = {}
@@ -88,9 +89,41 @@ class ClusteringService:
         if simplified_regular_silhouette:
             silhouette_results['Simplified Regular Silhouette'] = simplified_silhouette(X, y, centroids,
                                                                                         mode='regular')
-        if simplified_heuristic_silhouette:
-            silhouette_results['Simplified Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                          mode='heuristic')
+        if simplified_min_heuristic_silhouette:
+            silhouette_results['Simplified (min-L0) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                   mode='heuristic',
+                                                                                                   B_type='min',
+                                                                                                   regularization='L0')
+        if simplified_min_heuristic_silhouette:
+            silhouette_results['Simplified (min-L1-0.5) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                       mode='heuristic',
+                                                                                                       B_type='min',
+                                                                                                       regularization='L1',
+                                                                                                       eta=0.5)
+        if simplified_min_heuristic_silhouette:
+            silhouette_results['Simplified (min-L1-0.6) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                       mode='heuristic',
+                                                                                                       B_type='min',
+                                                                                                       regularization='L1',
+                                                                                                       eta=0.6)
+        if simplified_mean_heuristic_silhouette:
+            silhouette_results['Simplified (mean-L0) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                    mode='heuristic',
+                                                                                                    B_type='mean',
+                                                                                                    regularization='L0')
+        if simplified_mean_heuristic_silhouette:
+            silhouette_results['Simplified (mean-L0-0.5) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                        mode='heuristic',
+                                                                                                        B_type='mean',
+                                                                                                        regularization='L1',
+                                                                                                        eta=0.5)
+        if simplified_mean_heuristic_silhouette:
+            silhouette_results['Simplified (mean-L0-0.6) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                        mode='heuristic',
+                                                                                                        B_type='mean',
+                                                                                                        regularization='L1',
+                                                                                                        eta=0.6)
+
         if simplified_improved_silhouette:
             silhouette_results['Simplified Improved Silhouette'] = simplified_silhouette(X, y, centroids,
                                                                                          mode='improved')
@@ -107,7 +140,6 @@ class ClusteringService:
             self.log_service.log('Info', f'[Clustering Service] : Silhouette values for (K={k}) * {sil_log_str[:-2]}')
 
         return sorted_results
-
 
     @staticmethod
     def is_new_single_centroid(y: pd.DataFrame, number_of_single_centroids: int) -> bool:
