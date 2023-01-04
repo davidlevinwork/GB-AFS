@@ -48,6 +48,8 @@ def simplified_silhouette(X, labels, centroids, mode='regular', B_type='min', re
             sil_value = 1 - (np.asarray(a_non_zero) / np.asarray(new_b))
         if regularization == 'L1':
             sil_value = 1 - (np.asarray(a_non_zero) / (np.asarray(new_b) * eta))
+        if regularization == 'L2':
+            sil_value = 1 - (np.asarray(a_non_zero) / np.asarray(new_b)) + (eta * (np.square(np.asarray(a_non_zero))))
         return np.mean(sil_value)
 
 

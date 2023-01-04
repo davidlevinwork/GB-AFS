@@ -89,11 +89,19 @@ class ClusteringService:
         if simplified_regular_silhouette:
             silhouette_results['Simplified Regular Silhouette'] = simplified_silhouette(X, y, centroids,
                                                                                         mode='regular')
+        if simplified_improved_silhouette:
+            silhouette_results['Simplified Improved Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                         mode='improved')
         if simplified_min_heuristic_silhouette:
             silhouette_results['Simplified (min-L0) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
                                                                                                    mode='heuristic',
                                                                                                    B_type='min',
                                                                                                    regularization='L0')
+        if simplified_mean_heuristic_silhouette:
+            silhouette_results['Simplified (mean-L0) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                    mode='heuristic',
+                                                                                                    B_type='mean',
+                                                                                                    regularization='L0')
         if simplified_min_heuristic_silhouette:
             silhouette_results['Simplified (min-L1-0.5) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
                                                                                                        mode='heuristic',
@@ -101,32 +109,36 @@ class ClusteringService:
                                                                                                        regularization='L1',
                                                                                                        eta=0.5)
         if simplified_min_heuristic_silhouette:
-            silhouette_results['Simplified (min-L1-0.6) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+            silhouette_results['Simplified (min-L1-0.7) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
                                                                                                        mode='heuristic',
                                                                                                        B_type='min',
                                                                                                        regularization='L1',
-                                                                                                       eta=0.6)
+                                                                                                       eta=0.7)
+
         if simplified_mean_heuristic_silhouette:
-            silhouette_results['Simplified (mean-L0) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                                    mode='heuristic',
-                                                                                                    B_type='mean',
-                                                                                                    regularization='L0')
-        if simplified_mean_heuristic_silhouette:
-            silhouette_results['Simplified (mean-L0-0.5) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+            silhouette_results['Simplified (mean-L1-0.5) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
                                                                                                         mode='heuristic',
                                                                                                         B_type='mean',
                                                                                                         regularization='L1',
                                                                                                         eta=0.5)
         if simplified_mean_heuristic_silhouette:
-            silhouette_results['Simplified (mean-L0-0.6) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+            silhouette_results['Simplified (mean-L1-0.7) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
                                                                                                         mode='heuristic',
                                                                                                         B_type='mean',
                                                                                                         regularization='L1',
-                                                                                                        eta=0.6)
-
-        if simplified_improved_silhouette:
-            silhouette_results['Simplified Improved Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                         mode='improved')
+                                                                                                        eta=0.7)
+        if simplified_mean_heuristic_silhouette:
+            silhouette_results['Simplified (mean-L2-0.5) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                        mode='heuristic',
+                                                                                                        B_type='mean',
+                                                                                                        regularization='L2',
+                                                                                                        eta=0.5)
+        if simplified_mean_heuristic_silhouette:
+            silhouette_results['Simplified (mean-L2-0.7) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                        mode='heuristic',
+                                                                                                        B_type='mean',
+                                                                                                        regularization='L2',
+                                                                                                        eta=0.7)
 
         return silhouette_results
 
