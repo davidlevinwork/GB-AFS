@@ -1,5 +1,6 @@
-from DataService import Data
 from LogService import Log
+from DataService import Data
+from TableService import Table
 from ClusteringService import Clustering
 from VisualizationService import Visualization
 from ClassificationService import Classification
@@ -11,6 +12,7 @@ class Executor:
     def __init__(self):
         self.log_service = None
         self.data_service = None
+        self.table_service = None
         self.clustering_service = None
         self.visualization_service = None
         self.classification_service = None
@@ -19,8 +21,8 @@ class Executor:
 
     def init_services(self):
         self.log_service = Log.LogService()
+        self.table_service = Table.TableService()
         self.visualization_service = Visualization.VisualizationService(self.log_service)
-
         self.data_service = Data.DataService(self.log_service, self.visualization_service)
         self.clustering_service = Clustering.ClusteringService(self.log_service, self.visualization_service)
         self.classification_service = Classification.ClassificationService(self.log_service, self.visualization_service)
@@ -30,7 +32,7 @@ class Executor:
                                                                                         self.visualization_service)
 
     def execute(self):
-        data = self.data_service.execute_data_service('Music_Genre_Classification')
+        data = self.data_service.execute_data_service('Cardiotocography')
 
         F = self.feature_similarity_service.calculate_separation_matrix(X=data['train'][0], features=data['features'],
                                                                         labels=data['labels'],
@@ -46,3 +48,4 @@ class Executor:
                                                                   clustering_res=clustering_res,
                                                                   features=list(data['features']),
                                                                   n_values=5)
+        self.table_service.create_table(classification_res)
