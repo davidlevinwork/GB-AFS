@@ -55,7 +55,7 @@ class ClassificationService:
         evaluations = self.arrange_results(evaluations)
 
         end = time.time()
-        self.log_service.log(f'Debug' f'[Classification Service] - [{mode}]: Total run time in seconds:'
+        self.log_service.log(f'Debug', f'[Classification Service] - [{mode}]: Total run time in seconds:'
                              f' [{round(end - start, 3)}]')
 
         return evaluations
