@@ -7,6 +7,7 @@ from sklearn import tree
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold, cross_val_score
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
 
 NUMBER_OF_TEST_EPOCHS = 1
 NUMBER_OF_TRAIN_EPOCHS = 10
@@ -18,7 +19,10 @@ class ClassificationService:
         self.visualization_service = visualization_service
         self.classifiers = [LogisticRegression(),
                             tree.DecisionTreeClassifier(),
-                            KNeighborsClassifier(n_neighbors=5)]
+                            KNeighborsClassifier(n_neighbors=5),
+                            RandomForestClassifier(),
+                            GradientBoostingClassifier(),
+                            AdaBoostClassifier()]
         self.cv = KFold(n_splits=10, random_state=41, shuffle=True)
 
     def classify(self, X: pd.DataFrame, y: pd.DataFrame, F: np.ndarray, clustering_res: list, features: list,
