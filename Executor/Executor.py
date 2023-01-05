@@ -32,12 +32,12 @@ class Executor:
                                                                                         self.visualization_service)
 
     def execute(self):
-        data = self.data_service.execute_data_service('Cardiotocography')
+        data = self.data_service.execute_data_service('Music_Genre_Classification')
 
         F = self.feature_similarity_service.calculate_separation_matrix(X=data['train'][0], features=data['features'],
                                                                         labels=data['labels'],
                                                                         distance_measure='Jeffries-Matusita')
-        F_reduced = self.dimension_reduction_service.tsne(F=F, perplexity=10.0)
+        F_reduced = self.dimension_reduction_service.tsne(F=F, perplexity=30.0)
 
         clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
                                                                             n_features=len(data['features']))

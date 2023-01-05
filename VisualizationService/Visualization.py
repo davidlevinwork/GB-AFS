@@ -42,11 +42,10 @@ class VisualizationService:
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot t-SNE graph. Error: [{ex}]')
 
-    def plot_silhouette(self, clustering_results: list, distance_measure: str):
+    def plot_silhouette(self, clustering_results: list, distance_measure: str, sil_min: int = -0.5, sil_max: int = 5.0):
         try:
             plt.clf()
             plt.figure(figsize=(12, 10))
-            color = iter(cm.rainbow(np.linspace(0, 1, len(clustering_results[0]['Silhouette'].keys()))))
 
             # Get the colors from the color map
             c_index = 0
@@ -58,6 +57,7 @@ class VisualizationService:
                 plt.plot(k_values, sil_values, label=sil_type, linestyle="solid", c=colors[c_index])
                 c_index += 1
 
+            plt.ylim(sil_min, sil_max)
             plt.legend(bbox_to_anchor=(0.7, 1), loc=2, borderaxespad=0.)
             self.save_plot(plt, 'Silhouette', f'Silhouette Graph - [{distance_measure}]')
         except AssertionError as ex:
