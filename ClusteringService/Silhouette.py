@@ -43,13 +43,28 @@ def simplified_silhouette(X, labels, centroids, mode='regular', B_type='min', re
         clean_index_list = [i for i in labels_list if i not in a_zero_indexes]
         new_b = [i for j, i in enumerate(b) if j in clean_index_list]
 
-        sil_value = 0
-        if regularization == 'L0':
-            sil_value = 1 - (np.asarray(a_non_zero) / np.asarray(new_b))
-        if regularization == 'L1':
-            sil_value = 1 - (np.asarray(a_non_zero) / (np.asarray(new_b) * eta))
-        if regularization == 'L2':
-            sil_value = 1 - (np.asarray(a_non_zero) / np.asarray(new_b)) + (eta * (np.square(np.asarray(a_non_zero))))
+        result = get_simplified_silhouette_value(a_non_zero, new_b, regularization, eta)
+        return result
+
+
+def get_simplified_silhouette_value(a: list, b: list, regularization: str, eta: float):
+    if regularization == 'L0':
+        numerator = np.subtract(np.asarray(b), np.asarray(a))
+        denominator = np.maximum(np.asarray(a), np.asarray(b))
+        sil_value = np.divide(numerator, denominator)
+        return np.mean(sil_value)
+    if regularization == 'L1':
+        a_regularized = np.multiply(np.asarray(a), eta)
+        b_regularized = np.multiply(np.asarray(b), eta)
+        numerator = np.subtract(np.asarray(b), np.asarray(a))
+        denominator = np.maximum(np.asarray(a_regularized), np.asarray(b_regularized))
+        sil_value = np.divide(numerator, denominator)
+        return np.mean(sil_value)
+    if regularization == 'L2':
+        regularization = eta * (np.square(np.asarray(a)))
+        numerator = np.subtract(np.asarray(b), np.asarray(a))
+        denominator = np.maximum(np.asarray(a), np.asarray(b))
+        sil_value = (np.divide(numerator, denominator)) + regularization
         return np.mean(sil_value)
 
 
