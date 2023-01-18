@@ -74,7 +74,7 @@ class ClusteringService:
         return results
 
     @staticmethod
-    def calculate_silhouette_value(X: pd.DataFrame, y: pd.DataFrame, centroids: array, silhouette: bool = False,
+    def calculate_silhouette_value(X: pd.DataFrame, y: pd.DataFrame, centroids: array, silhouette: bool = True,
                                    heuristic_silhouette: bool = True, simplified_regular_silhouette: bool = False,
                                    simplified_improved_silhouette: bool = False,
                                    simplified_min_heuristic_silhouette: bool = True,
@@ -84,60 +84,11 @@ class ClusteringService:
 
         if silhouette:
             silhouette_results['Silhouette'] = silhouette_score(X, y)
-        if heuristic_silhouette:
-            silhouette_results['Heuristic Silhouette'] = heuristic_silhouette_value(X, y)
-        if simplified_regular_silhouette:
-            silhouette_results['Sim. Regular Silhouette'] = simplified_silhouette(X, y, centroids, mode='regular')
-        if simplified_improved_silhouette:
-            silhouette_results['Sim. Improved Silhouette'] = simplified_silhouette(X, y, centroids, mode='improved')
-        if simplified_min_heuristic_silhouette:
-            silhouette_results['Sim. (min-L0) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                             mode='heuristic',
-                                                                                             B_type='min',
-                                                                                             regularization='L0')
         if simplified_mean_heuristic_silhouette:
             silhouette_results['Sim. (mean-L0) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
                                                                                               mode='heuristic',
                                                                                               B_type='mean',
                                                                                               regularization='L0')
-        if simplified_min_heuristic_silhouette:
-            silhouette_results['Sim (min-L1-0.5) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                                mode='heuristic',
-                                                                                                B_type='min',
-                                                                                                regularization='L1',
-                                                                                                eta=0.5)
-        if simplified_min_heuristic_silhouette:
-            silhouette_results['Sim. (min-L1-0.7) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                                 mode='heuristic',
-                                                                                                 B_type='min',
-                                                                                                 regularization='L1',
-                                                                                                 eta=0.7)
-
-        if simplified_mean_heuristic_silhouette:
-            silhouette_results['Sim. (mean-L1-0.5) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                                  mode='heuristic',
-                                                                                                  B_type='mean',
-                                                                                                  regularization='L1',
-                                                                                                  eta=0.5)
-        if simplified_mean_heuristic_silhouette:
-            silhouette_results['Sim. (mean-L1-0.7) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                                  mode='heuristic',
-                                                                                                  B_type='mean',
-                                                                                                  regularization='L1',
-                                                                                                  eta=0.7)
-        if simplified_mean_heuristic_silhouette:
-            silhouette_results['Sim. (mean-L2-0.5) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                                  mode='heuristic',
-                                                                                                  B_type='mean',
-                                                                                                  regularization='L2',
-                                                                                                  eta=0.5)
-        if simplified_mean_heuristic_silhouette:
-            silhouette_results['Sim. (mean-L2-0.7) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                                  mode='heuristic',
-                                                                                                  B_type='mean',
-                                                                                                  regularization='L2',
-                                                                                                  eta=0.7)
-
         return silhouette_results
 
     def arrange_results(self, results: list) -> list:
