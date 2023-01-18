@@ -1,5 +1,6 @@
 import time
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 
@@ -13,18 +14,19 @@ class DataService:
 
         results = {}
 
-        results['dataset'] = DataService.load_data(data_set)
+        results['Dataset'] = DataService.load_data(data_set)
+        results['N. Dataset'] = DataService.normalize_features(results['Dataset'])
 
-        train, test = DataService.train_test_split(results['dataset'])
-        results['train'] = train
-        results['test'] = test
+        train, test = DataService.train_test_split(results['N. Dataset'])
+        results['Train'] = train
+        results['Test'] = test
 
-        results['features'] = DataService.get_features(results['train'][1])
-        results['labels'] = DataService.get_labels(results['train'][2])
+        results['Features'] = DataService.get_features(results['Train'][1])
+        results['Labels'] = DataService.get_labels(results['Train'][2])
 
         end = time.time()
         self.log_service.log('Info', f'[Data Service] : Data set name: ({data_set}.csv) * Number of features: '
-                                     f'({len(results["features"])}) * Number of labels: ({len(results["labels"])})')
+                                     f'({len(results["Features"])}) * Number of labels: ({len(results["Labels"])})')
         self.log_service.log('Debug', f'[Data Service] : Total run time in seconds: [{round(end-start, 3)}]')
         return results
 
@@ -87,6 +89,13 @@ class DataService:
             Features names of the given data set.
         """
         return X.columns
+
+    @staticmethod
+    def normalize_features(X: pd.DataFrame) -> pd.DataFrame:
+        scaler = MinMaxScaler()
+        normalized_X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
+
+        return normalized_X
 
     @staticmethod
     def get_labels(X: pd.DataFrame) -> pd.DataFrame:

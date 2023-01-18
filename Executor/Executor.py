@@ -34,18 +34,18 @@ class Executor:
     def execute(self):
         data = self.data_service.execute_data_service('Cardiotocography')
 
-        F = self.feature_similarity_service.calculate_separation_matrix(X=data['train'][0], features=data['features'],
-                                                                        labels=data['labels'],
+        F = self.feature_similarity_service.calculate_separation_matrix(X=data['Train'][0], features=data['Features'],
+                                                                        labels=data['Labels'],
                                                                         distance_measure='Jeffries-Matusita')
         F_reduced = self.dimension_reduction_service.tsne(F=F, perplexity=10.0)
 
         clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
-                                                                            n_features=len(data['features']))
+                                                                            n_features=len(data['Features']))
 
-        classification_res = self.classification_service.classify(X=data['train'][1],
-                                                                  y=data['train'][2],
+        classification_res = self.classification_service.classify(X=data['Train'][1],
+                                                                  y=data['Train'][2],
                                                                   F=F_reduced,
                                                                   clustering_res=clustering_res,
-                                                                  features=list(data['features']),
+                                                                  features=list(data['Features']),
                                                                   n_values=5)
         self.table_service.create_table(classification_res)
