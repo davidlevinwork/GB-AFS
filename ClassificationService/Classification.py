@@ -7,7 +7,7 @@ from sklearn import tree
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold, cross_val_score
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 
 NUMBER_OF_TEST_EPOCHS = 1
 NUMBER_OF_TRAIN_EPOCHS = 10
@@ -21,7 +21,6 @@ class ClassificationService:
                             tree.DecisionTreeClassifier(),
                             KNeighborsClassifier(n_neighbors=5),
                             RandomForestClassifier(),
-                            GradientBoostingClassifier(),
                             AdaBoostClassifier()]
         self.cv = KFold(n_splits=10, random_state=41, shuffle=True)
 
@@ -59,7 +58,7 @@ class ClassificationService:
         evaluations = self.arrange_results(evaluations)
 
         end = time.time()
-        self.log_service.log(f'Debug', f'[Classification Service] - [{mode}]: Total run time in seconds:'
+        self.log_service.log('Debug', f'[Classification Service] - [{mode}]: Total run time in seconds:'
                              f' [{round(end - start, 3)}]')
 
         return evaluations
@@ -68,6 +67,10 @@ class ClassificationService:
                                K: int, mode: str) -> dict:
         new_X = self.prepare_data(X, F, results['Kmedoids']['Centroids'], features)
         evaluation = self.evaluate(new_X, y, K, mode)
+
+        self.log_service.log('Debug', f'[Classification Service] - Finished to execute classification for {K} '
+                                      f'in mode {mode}.')
+
         return evaluation
 
     @staticmethod
