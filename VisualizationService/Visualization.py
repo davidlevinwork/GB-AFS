@@ -112,7 +112,7 @@ class VisualizationService:
             ax.set_xlabel("K value")
             ax.set_ylabel("Accuracy")
             ax.axis(ymin=acc_min, ymax=acc_max)
-            ax.legend(bbox_to_anchor=(0.7, 1), loc=2, borderaxespad=0.)
+            ax.legend(bbox_to_anchor=(0.01, 1), loc=2, borderaxespad=0.)
 
             # Right Y axis (silhouette)
             ax2 = ax.twinx()
@@ -124,7 +124,7 @@ class VisualizationService:
 
             ax2.set_ylabel("Silhouette Value")
             ax2.axis(ymin=sil_min, ymax=sil_max)
-            ax2.legend(bbox_to_anchor=(0.01, 1), loc=2, borderaxespad=0.)
+            ax2.legend(bbox_to_anchor=(0.8, 1), loc=2, borderaxespad=0.)
 
             self.save_plot(plt, 'Accuracy', f'Accuracy-Silhouette {mode} - [{distance_measure}]')
         except AssertionError as ex:
