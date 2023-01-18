@@ -75,6 +75,18 @@ class DataService:
         return (train, X_train, y_train), (test, X_test, y_test)
 
     @staticmethod
+    def kf_split(data: pd.DataFrame, train_index, val_index):
+        train = data.iloc[train_index]
+        X_train = train.drop('class', axis=1)
+        y_train = pd.DataFrame(train['class'])
+
+        val = data.iloc[val_index]
+        X_val = val.drop('class', axis=1)
+        y_val = pd.DataFrame(val['class'])
+
+        return (train, X_train, y_train), (val, X_val, y_val)
+
+    @staticmethod
     def get_features(X: pd.DataFrame) -> pd.DataFrame:
         """Extract features names
 
