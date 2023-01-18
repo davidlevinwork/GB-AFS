@@ -85,10 +85,10 @@ class ClusteringService:
         if silhouette:
             silhouette_results['Silhouette'] = silhouette_score(X, y)
         if simplified_mean_heuristic_silhouette:
-            silhouette_results['Sim. (mean-L0) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
-                                                                                              mode='heuristic',
-                                                                                              B_type='mean',
-                                                                                              regularization='L0')
+            silhouette_results['Simplified (mean-L0) Heuristic Silhouette'] = simplified_silhouette(X, y, centroids,
+                                                                                                    mode='heuristic',
+                                                                                                    B_type='mean',
+                                                                                                    regularization='L0')
         return silhouette_results
 
     def arrange_results(self, results: list) -> list:
