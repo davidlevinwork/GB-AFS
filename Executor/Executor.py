@@ -7,6 +7,8 @@ from ClassificationService import Classification
 from FeatureSimilarityService import FeatureSimilarity
 from DimensionReductionService import DimensionReduction
 
+from sklearn.model_selection import KFold
+
 
 class Executor:
     def __init__(self):
@@ -34,18 +36,22 @@ class Executor:
     def execute(self):
         data = self.data_service.execute_data_service('Cardiotocography')
 
-        F = self.feature_similarity_service.calculate_separation_matrix(X=data['Train'][0], features=data['Features'],
-                                                                        labels=data['Labels'],
-                                                                        distance_measure='Jeffries-Matusita')
-        F_reduced = self.dimension_reduction_service.tsne(F=F, perplexity=10.0)
+        # Initialize the KFold object with 5 splits and shuffle the data
+        kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
-        clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
-                                                                            n_features=len(data['Features']))
+        for train_index, val_index in kf.split(data['Train'][0]):
+            X_train = data['Train'][0].iloc[train_index]
+            X_val = data['Train'][0].iloc[val_index]
 
-        classification_res = self.classification_service.classify(X=data['Train'][1],
-                                                                  y=data['Train'][2],
-                                                                  F=F_reduced,
-                                                                  clustering_res=clustering_res,
-                                                                  features=list(data['Features']),
-                                                                  n_values=5)
-        self.table_service.create_table(classification_res)
+            F = self.feature_similarity_service.calculate_separation_matrix(X=X_train, features=data['Features'],
+                                                                            labels=data['Labels'],
+                                                                            distance_measure='Jeffries-Matusita')
+            F_reduced = self.dimension_reduction_service.tsne(F=F, perplexity=10.0)
+
+            clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
+                                                                                n_features=len(data['Features']))
+
+            classification_res = self.classification_service.classify(X=data['Train'][1], y=data['Train'][2],
+                                                                      F=F_reduced, clustering_res=clustering_res,
+                                                                      features=list(data['Features']), n_values=5)
+            self.table_service.create_table(classification_res)
