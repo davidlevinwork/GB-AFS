@@ -92,10 +92,16 @@ class DataService:
 
     @staticmethod
     def normalize_features(X: pd.DataFrame) -> pd.DataFrame:
-        scaler = MinMaxScaler()
-        normalized_X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
+        # Select the columns to normalize
+        column_names = X.columns
+        cols_to_normalize = X.columns.difference(['class'])
 
-        return normalized_X
+        scaler = MinMaxScaler()
+
+        X[cols_to_normalize] = scaler.fit_transform(X[cols_to_normalize])
+        X.columns = column_names
+
+        return X
 
     @staticmethod
     def get_labels(X: pd.DataFrame) -> pd.DataFrame:
