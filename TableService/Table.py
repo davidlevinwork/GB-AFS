@@ -5,7 +5,7 @@ from prettytable import PrettyTable
 
 class TableService:
     @staticmethod
-    def create_table(classification_res: dict):
+    def create_table(index: int, classification_res: dict):
         test_results = classification_res['Test']['Results By K']
         train_results = classification_res['Train']['Results By K']
 
@@ -23,16 +23,16 @@ class TableService:
             row = [test_result['K']] + list(test_result['Mean'].values())
             table.add_row([col for col in row])
 
-        TableService.save_table(table)
+        TableService.save_table(index, table)
 
     @staticmethod
-    def save_table(table):
+    def save_table(index, table):
         try:
             current_dir = os.path.dirname(__file__)
             plots_dir = os.path.join(current_dir, '../', 'Files/', 'Plots/')
             latest_plot_dir = max(glob.glob(os.path.join(plots_dir, '*/')), key=os.path.getmtime).rsplit('\\', 1)[0]
 
-            table_file = os.path.join(latest_plot_dir, 'Results.txt')
+            table_file = os.path.join(latest_plot_dir, f'Results_{index}.txt')
 
             with open(table_file, 'w') as w:
                 data = table.get_string(title="Classification Results")
