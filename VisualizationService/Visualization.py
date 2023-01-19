@@ -12,12 +12,13 @@ time_stamp = datetime.timestamp(dt)
 class VisualizationService:
     def __init__(self, log_service):
         self.log_service = log_service
-        self.cmap = plt.get_cmap('gist_ncar')
+        self.cmap = plt.get_cmap('nipy_spectral')
 
-    def save_plot(self, file: plt, header: str, title: str):
+    def save_plot(self, file: plt, header: str, title: str, fold_index: int):
         try:
             current_dir = os.path.dirname(__file__)
-            results_dir = os.path.join(current_dir, '../', 'Files/', 'Plots/', f'{time_stamp}', f'{header}')
+            results_dir = os.path.join(current_dir, '../', 'Files/', 'Plots/', f'{time_stamp}',
+                                       f'Fold Number {fold_index}/', f'{header}')
 
             if not os.path.isdir(results_dir):
                 os.makedirs(results_dir)
@@ -26,7 +27,7 @@ class VisualizationService:
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to save plot as a file. Error: [{ex}]')
 
-    def plot_tsne(self, data: np.ndarray, distance_measure: str):
+    def plot_tsne(self, data: np.ndarray, distance_measure: str, fold_index: int):
         try:
             plt.clf()
             plt.figure(figsize=(10, 8))
@@ -38,11 +39,12 @@ class VisualizationService:
             plt.title(f't-SNE Result\n'
                       f'{distance_measure}')
 
-            self.save_plot(plt, 'Dimensionality Reduction', f'tSNE Graph - [{distance_measure}]')
+            self.save_plot(plt, 'Dimensionality Reduction', f'tSNE Graph - [{distance_measure}]', fold_index)
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot t-SNE graph. Error: [{ex}]')
 
-    def plot_silhouette(self, clustering_results: list, distance_measure: str, sil_min: int = -0.5, sil_max: int = 5.0):
+    def plot_silhouette(self, clustering_results: list, distance_measure: str, fold_index: int,
+                        sil_min: int = -0.5, sil_max: int = 5.0):
         try:
             plt.clf()
             plt.figure(figsize=(12, 10))
@@ -59,11 +61,11 @@ class VisualizationService:
 
             plt.ylim(sil_min, sil_max)
             plt.legend(bbox_to_anchor=(0.7, 1), loc=2, borderaxespad=0.)
-            self.save_plot(plt, 'Silhouette', f'Silhouette Graph - [{distance_measure}]')
+            self.save_plot(plt, 'Silhouette', f'Silhouette Graph - [{distance_measure}]', fold_index)
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot silhouette graph. Error: [{ex}]')
 
-    def plot_clustering(self, F: pd.DataFrame, clustering_results: list, distance_measure: str):
+    def plot_clustering(self, F: pd.DataFrame, clustering_results: list, distance_measure: str, fold_index: int):
         try:
             plt.clf()
             plt.figure(figsize=(12, 10))
@@ -83,7 +85,7 @@ class VisualizationService:
                 plt.title(f'Clustering Result for K={K}\n'
                           f'{distance_measure}')
 
-                self.save_plot(plt, 'Clustering', f'Clustering for K={K} - [{distance_measure}]')
+                self.save_plot(plt, 'Clustering', f'Clustering for K={K} - [{distance_measure}]', fold_index)
 
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')

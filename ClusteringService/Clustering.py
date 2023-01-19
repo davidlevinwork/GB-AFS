@@ -12,7 +12,7 @@ class ClusteringService:
         self.log_service = log_service
         self.visualization_service = visualization_service
 
-    def execute_clustering_service(self, F: pd.DataFrame, n_features: int):
+    def execute_clustering_service(self, F: pd.DataFrame, n_features: int, fold_index: int):
         start = time.time()
         K_values = [*range(2, n_features, 1)]
 
@@ -26,8 +26,8 @@ class ClusteringService:
                 results.append(task.result())
 
         results = self.arrange_results(results)
-        self.visualization_service.plot_silhouette(results, 'Jeffries-Matusita')
-        self.visualization_service.plot_clustering(F, results, 'Jeffries-Matusita')
+        self.visualization_service.plot_silhouette(results, 'Jeffries-Matusita', fold_index)
+        self.visualization_service.plot_clustering(F, results, 'Jeffries-Matusita', fold_index)
 
         end = time.time()
         self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end - start, 3)}]')
@@ -97,7 +97,7 @@ class ClusteringService:
             k = result['K']
             sil_log_str = ''
             for sil_name, sil_value in result['Silhouette'].items():
-                sil_log_str += f'({sil_name}) - ({round(sil_value, 3)}), '
+                sil_log_str += f'({sil_name}) - ({"%.4f" % sil_value}), '
             self.log_service.log('Info', f'[Clustering Service] : Silhouette values for (K={k}) * {sil_log_str[:-2]}')
 
         return sorted_results

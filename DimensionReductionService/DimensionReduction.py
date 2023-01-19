@@ -9,13 +9,15 @@ class DimensionReductionService:
         self.log_service = log_service
         self.visualization_service = visualization_service
 
-    def tsne(self, F: pd.DataFrame, n_components: int = 2, perplexity: int = 30, n_iter: int = 1000) -> pd.DataFrame:
+    def tsne(self, F: pd.DataFrame, fold_index: int, n_components: int = 2, perplexity: int = 30, n_iter: int = 1000) -> pd.DataFrame:
         """Perform dimension reduction using the TSNE algorithm
 
         Parameters
         ----------
         F : pandas.DataFrame
             Matrix F with separation values for each feature
+        fold_index: int
+            Index of the given k-fold (for saving results & plots)
         n_components : int, optional
             Number of components parameter for TSNE, by default 2
         perplexity : int, optional
@@ -32,7 +34,7 @@ class DimensionReductionService:
         tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter)
         F_reduced = tsne.fit_transform(F)
 
-        self.visualization_service.plot_tsne(F_reduced, 'Jeffries-Matusita')
+        self.visualization_service.plot_tsne(F_reduced, 'Jeffries-Matusita', fold_index)
 
         end = time.time()
         self.log_service.log('Info', f'[Dimension Reduction Service] : Number of components: ({n_components}) * '
