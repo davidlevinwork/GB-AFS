@@ -1,5 +1,7 @@
 import time
 import pandas as pd
+from collections import defaultdict
+from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
@@ -131,3 +133,50 @@ class DataService:
         """
         labels_names = X['class'].unique()
         return labels_names
+
+    @staticmethod
+    def get_train_results(classification_results: dict, clustering_results: list, n_folds: int) -> dict:
+        clustering = DataService.get_train_clustering(clustering_results, n_folds)
+        classification = DataService.get_train_classification(classification_results, n_folds)
+
+        return {
+            'Clustering': clustering,
+            'Classification': classification
+        }
+
+    @staticmethod
+    def get_train_classification(results: dict, n_folds: int) -> dict:
+        # Init with the results of the first fold
+        combined_results = results[0]['Test']['Results By Classifiers']
+
+        # Sum
+        for i in range(1, n_folds):
+            classifiers = results[i]['Test']['Results By Classifiers']
+            for classifier, classifier_results in classifiers.items():
+                combined_results[classifier] = dict(Counter(combined_results[classifier]) + Counter(classifier_results))
+
+        # Divide
+        for classifier, classifier_results in combined_results.items():
+            combined_results[classifier] = [x / n_folds for x in list(combined_results[classifier].values())]
+
+        return combined_results
+
+    @staticmethod
+    def get_train_clustering(results: list, n_folds: int) -> list:
+        result_dict = defaultdict(lambda: {'Results': defaultdict(int)})
+
+        # Sum
+        for sub_dict_list in results.values():
+            for sub_dict in sub_dict_list:
+                k = sub_dict['K']
+                results = sub_dict['Silhouette']
+                for res, val in results.items():
+                    result_dict[k]['Results'][res] += val
+
+        combined_results = [{'K': k, 'Silhouette': dict(v)} for k, v in result_dict.items()]
+
+        # Divide
+        combined_results = [{'K': d['K'], 'Results': {res: val / n_folds for res, val in d['Results'].items()}}
+                            for d in combined_results]
+
+        return combined_results
