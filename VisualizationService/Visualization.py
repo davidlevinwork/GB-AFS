@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import cm
 
 dt = datetime.now()
 time_stamp = datetime.timestamp(dt)
@@ -96,8 +95,6 @@ class VisualizationService:
         try:
             plt.clf()
             fig, ax = plt.subplots(figsize=(12, 10))
-            color = iter(cm.rainbow(np.linspace(0, 1, (len(classification_results['Results By Classifiers'].keys()) +
-                                                       len(clustering_results[0]['Silhouette'].keys())))))
 
             # Get the colors from the color map
             c_index = 0
