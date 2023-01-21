@@ -136,7 +136,7 @@ class DataService:
 
     @staticmethod
     def get_train_results(classification_results: dict, clustering_results: list, n_folds: int) -> dict:
-        clustering = DataService.get_train_clustering(clustering_results, n_folds)
+        clustering = DataService.get_train_clustering(clustering_results)
         classification = DataService.get_train_classification(classification_results, n_folds)
 
         return {
@@ -162,21 +162,22 @@ class DataService:
         return combined_results
 
     @staticmethod
-    def get_train_clustering(results: list, n_folds: int) -> list:
-        result_dict = defaultdict(lambda: {'Results': defaultdict(int)})
+    def get_train_clustering(results: list) -> list:
+        # Init with the results of the first fold
+        combined_results = results[0]
 
         # Sum
-        for sub_dict_list in results.values():
-            for sub_dict in sub_dict_list:
-                k = sub_dict['K']
-                results = sub_dict['Silhouette']
-                for res, val in results.items():
-                    result_dict[k]['Results'][res] += val
-
-        combined_results = [{'K': k, 'Silhouette': dict(v)} for k, v in result_dict.items()]
+        for i in range(1, len(results)):
+            for j, result in enumerate(results[i]):
+                k = result['K']
+                sub_results = result['Silhouette']
+                for sil_name, sil_value in sub_results.items():
+                    combined_results[j]['Silhouette'][sil_name] += sil_value
 
         # Divide
-        combined_results = [{'K': d['K'], 'Results': {res: val / n_folds for res, val in d['Results'].items()}}
-                            for d in combined_results]
+        for result in combined_results:
+            sub_results = result['Silhouette']
+            for sil_name, sil_value in sub_results.items():
+                sub_results[sil_name] /= len(results)
 
         return combined_results
