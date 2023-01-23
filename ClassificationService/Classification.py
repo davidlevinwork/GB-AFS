@@ -6,8 +6,9 @@ import concurrent.futures
 from sklearn import tree
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import KFold, cross_val_score
+from sklearn.model_selection import KFold, cross_validate, cross_val_score
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.metrics import make_scorer, accuracy_score, precision_score, recall_score, f1_score
 
 NUMBER_OF_TEST_EPOCHS = 1
 NUMBER_OF_TRAIN_EPOCHS = 10
@@ -24,17 +25,21 @@ class ClassificationService:
                             AdaBoostClassifier()]
         self.cv = KFold(n_splits=10, random_state=41, shuffle=True)
 
-    def classify(self, X: pd.DataFrame, y: pd.DataFrame, F: np.ndarray, clustering_res: list, features: list,
-                 n_values: int) -> dict:
-        # Train
-        K_values = [*range(2, len(features), 1)]
-        train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Train')
-        self.visualization_service.plot_accuracy_to_silhouette(train_res, clustering_res, 'Jeffries-Matusita', 'Train')
+    def classify(self, train: (pd.DataFrame, pd.DataFrame), val: (pd.DataFrame, pd.DataFrame), F: np.ndarray,
+                 clustering_res: list, features: list, K_values: list) -> dict:
 
-        # Test
-        K_values = self.choose_K_test_values(train_res['Results By Accuracy'], len(features), n_values)
-        test_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Test')
-        self.visualization_service.plot_accuracy_to_silhouette(test_res, clustering_res, 'Jeffries-Matusita', 'Test')
+        if val is not None:
+            # Train
+            X, y = train[0], train[1]
+            train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Train')
+            # Test
+            X, y = val[0], val[1]
+            test_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Test')
+        else:
+            # Train
+            X, y = train[0], train[1]
+            train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'SIGN')
+            test_res = train_res
 
         return {
             "Train": train_res,
@@ -46,20 +51,27 @@ class ClassificationService:
         start = time.time()
 
         evaluations = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            # Submit a task for each K value
-            tasks = [executor.submit(self.execute_classification, X, y, F, clustering_res[K - 2], features, K, mode)
-                     for K in K_values]
+        if mode != 'SIGN':
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+                # Submit a task for each K value
+                tasks = [executor.submit(self.execute_classification, X, y, F, clustering_res[K - 2], features, K, mode)
+                         for K in K_values]
 
-            # Wait for the tasks to complete and store the results
-            for task in concurrent.futures.as_completed(tasks):
-                evaluations.append(task.result())
+                # Wait for the tasks to complete and store the results
+                for task in concurrent.futures.as_completed(tasks):
+                    evaluations.append(task.result())
+        else:
+            for K in K_values:
+                K_clustering = [x for x in clustering_res if x['K'] == K][0]
+                evaluations.append(
+                    self.execute_classification(X, y, F, K_clustering, features, K, mode)
+                )
 
         evaluations = self.arrange_results(evaluations)
 
         end = time.time()
         self.log_service.log('Debug', f'[Classification Service] - [{mode}]: Total run time in seconds:'
-                             f' [{round(end - start, 3)}]')
+                                      f' [{round(end - start, 3)}]')
 
         return evaluations
 
@@ -92,7 +104,7 @@ class ClassificationService:
 
             epochs = NUMBER_OF_TRAIN_EPOCHS if mode == 'Train' else NUMBER_OF_TEST_EPOCHS
             for _ in range(epochs):
-                scores = cross_val_score(classifier, X, np.ravel(y), scoring='accuracy', cv=self.cv, n_jobs=1)
+                scores = cross_val_score(classifier, X, np.ravel(y), cv=self.cv, scoring='accuracy')
                 std_score += np.std(scores)
                 mean_score += np.mean(scores)
 
@@ -110,6 +122,14 @@ class ClassificationService:
             'Classifiers': classifiers_str
         }
 
+    @staticmethod
+    def custom_scorer(y_true, y_pred):
+        return {'accuracy': accuracy_score(y_true, y_pred),
+                'precision': precision_score(y_true, y_pred, average='weighted'),
+                'recall': recall_score(y_true, y_pred, average='weighted'),
+                'f1': f1_score(y_true, y_pred, average='weighted')
+                }
+
     def arrange_results(self, results: list) -> dict:
         b_results = results
         for result in sorted(results, key=lambda x: x['K']):
@@ -120,7 +140,8 @@ class ClassificationService:
 
         new_results = {
             'Results By K': sorted(results, key=lambda x: x['K']),
-            'Results By Accuracy': sorted(results, key=lambda x: sum(x['Mean'].values())/len(x['Mean']), reverse=True),
+            'Results By Accuracy': sorted(results, key=lambda x: sum(x['Mean'].values()) / len(x['Mean']),
+                                          reverse=True),
             'Results By Classifiers': self.arrange_results_by_classifier(b_results)
         }
         return new_results
@@ -144,10 +165,10 @@ class ClassificationService:
 
     def choose_K_test_values(self, train_res: dict, n_features: int, n_values: int) -> list:
         # Default values
-        K_values = [# n_features,
-                    math.ceil((1 / 4) * n_features),
-                    math.ceil((1 / 8) * n_features),
-                    math.ceil((1 / 16) * n_features)]
+        K_values = [  # n_features,
+            math.ceil((1 / 4) * n_features),
+            math.ceil((1 / 8) * n_features),
+            math.ceil((1 / 16) * n_features)]
         if n_features > 32:
             K_values.append(math.ceil((1 / 32) * n_features))
 

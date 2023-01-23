@@ -43,7 +43,7 @@ class VisualizationService:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot t-SNE graph. Error: [{ex}]')
 
     def plot_silhouette(self, clustering_results: list, distance_measure: str, fold_index: int,
-                        sil_min: int = -0.5, sil_max: int = 5.0):
+                        sil_min: int = -0.5, sil_max: int = 2.0):
         try:
             plt.clf()
             plt.figure(figsize=(12, 10))
@@ -89,22 +89,22 @@ class VisualizationService:
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
 
-    def plot_accuracy_to_silhouette(self, classification_results: dict, clustering_results: list, distance_measure: str,
-                                    mode: str, sil_min: int = 0.0, sil_max: int = 1.0, acc_min: int = 0.0,
-                                    acc_max: int = 1.0):
+    def plot_accuracy_to_silhouette(self, classification_results: dict, clustering_results: list, knees: dict,
+                                    distance_measure: str, mode: str, sil_min: int = 0.0, sil_max: int = 1.0,
+                                    acc_min: int = 0.0, acc_max: int = 1.0):
         try:
             plt.clf()
             fig, ax = plt.subplots(figsize=(12, 10))
 
             # Get the colors from the color map
             c_index = 0
-            colors = [self.cmap(i) for i in np.linspace(0, 1,
-                                                        len(classification_results['Results By Classifiers'].keys()) +
-                                                        len(clustering_results[0]['Silhouette'].keys()))]
+            colors = [self.cmap(i) for i in np.linspace(0, 1, len(classification_results) + len(knees) +
+                                                        len(clustering_results[0]['Silhouette']))]
 
             # Left Y axis (accuracy)
-            for classifier, classifier_val in classification_results['Results By Classifiers'].items():
-                ax.plot(classifier_val.keys(), classifier_val.values(), linestyle="-.", label=f'{str(classifier)}',
+            for classifier, classifier_val in classification_results.items():
+                x_values = [*range(2, len(classification_results[classifier]) + 2, 1)]
+                ax.plot(x_values, classifier_val, linestyle="-.", label=f'{str(classifier)}',
                         c=colors[c_index])
                 c_index += 1
 
@@ -121,10 +121,14 @@ class VisualizationService:
                 plt.plot(k_values, sil_values, label=sil_type, linestyle="solid", c=colors[c_index])
                 c_index += 1
 
+            # Knees
+            for knee, knee_values in knees.items():
+                plt.axvline(x=knee_values['Knee'], label=str(knee), c=colors[c_index])
+
             ax2.set_ylabel("Silhouette Value")
             ax2.axis(ymin=sil_min, ymax=sil_max)
             ax2.legend(bbox_to_anchor=(0.8, 1), loc=2, borderaxespad=0.)
 
-            self.save_plot(plt, 'Accuracy', f'Accuracy-Silhouette {mode} - [{distance_measure}]')
+            self.save_plot(plt, 'Accuracy', f'Accuracy-Silhouette {mode} - [{distance_measure}]', 999)
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot accuracy graph. Error: [{ex}]')

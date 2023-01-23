@@ -12,9 +12,8 @@ class ClusteringService:
         self.log_service = log_service
         self.visualization_service = visualization_service
 
-    def execute_clustering_service(self, F: pd.DataFrame, n_features: int, fold_index: int):
+    def execute_clustering_service(self, F: pd.DataFrame, K_values: list, fold_index: int):
         start = time.time()
-        K_values = [*range(2, n_features, 1)]
 
         results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:

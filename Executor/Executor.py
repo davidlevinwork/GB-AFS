@@ -7,6 +7,7 @@ from ClassificationService import Classification
 from FeatureSimilarityService import FeatureSimilarity
 from DimensionReductionService import DimensionReduction
 
+from kneed import KneeLocator
 from sklearn.model_selection import KFold
 
 
@@ -34,24 +35,127 @@ class Executor:
                                                                                         self.visualization_service)
 
     def execute(self):
-        data = self.data_service.execute_data_service('Cardiotocography')
+        data = self.data_service.execute_data_service('Microsoft_Malware_Sample')
 
-        # Initialize the KFold object with 5 splits and shuffle the data
+        knees = self.stage_1(data=data)
+        K_values = [knees['Interp1d']['Knee']] + [knees['Polynomial']['Knee']]
+        results = self.stage_2(data=data, K_values=list(set(K_values)), knees=knees)
+        self.stage_3(data=data, K_values=list(set(K_values)), knees=knees)
+
+    def stage_1(self, data: dict):
+        train_results = self.execute_train(data)
+        knees = self.find_best_k_value(train_results)
+        self.visualization_service.plot_accuracy_to_silhouette(train_results['Classification'],
+                                                               train_results['Clustering'], knees,
+                                                               'Jeffries-Matusita', 'Train')
+
+        return knees
+
+    def stage_2(self, data: dict, K_values: list, knees):
+        self.log_service.log('Info', f'[Executor] : ********************* Train *********************')
+        F = self.feature_similarity_service.calculate_separation_matrix(X=data['Train'][0], features=data['Features'],
+                                                                        labels=data['Labels'],
+                                                                        distance_measure='Jeffries-Matusita')
+        F_reduced = self.dimension_reduction_service.tsne(F=F, fold_index=1000, perplexity=10.0)
+
+        clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
+                                                                            K_values=K_values,
+                                                                            fold_index=1000)
+
+        classification_res = self.classification_service.classify(train=(data['Train'][1], data['Train'][2]), val=None,
+                                                                  F=F_reduced, clustering_res=clustering_res,
+                                                                  features=list(data['Features']), K_values=K_values)
+
+        self.table_service.create_table(4444, classification_res)
+
+        return clustering_res
+
+    def stage_3(self, data: dict, K_values: list, knees):
+        self.log_service.log('Info', f'[Executor] : ********************* Test *********************')
+        F = self.feature_similarity_service.calculate_separation_matrix(X=data['Test'][0], features=data['Features'],
+                                                                        labels=data['Labels'],
+                                                                        distance_measure='Jeffries-Matusita')
+        F_reduced = self.dimension_reduction_service.tsne(F=F, fold_index=1000, perplexity=10.0)
+
+        clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
+                                                                            K_values=K_values,
+                                                                            fold_index=1000)
+
+        classification_res = self.classification_service.classify(train=(data['Test'][1], data['Test'][2]), val=None,
+                                                                  F=F_reduced, clustering_res=clustering_res,
+                                                                  features=list(data['Features']), K_values=K_values)
+
+        self.table_service.create_table(5555, classification_res)
+
+    def execute_train(self, data: dict):
+        clustering_results = {}
+        classification_results = {}
+
+        # Initialize the KFold object with k splits and shuffle the data
         kf = KFold(n_splits=5, shuffle=True, random_state=42)
+        for i, (train_index, val_index) in enumerate(kf.split(data['Train'][0])):
+            self.log_service.log('Info',
+                                 f'[Executor] : ********************* Fold Number {i + 1} *********************')
+            train, val = self.data_service.kf_split(data['Train'][0], train_index, val_index)
 
-        for train_index, val_index in kf.split(data['Train'][0]):
-            X_train = data['Train'][0].iloc[train_index]
-            X_val = data['Train'][0].iloc[val_index]
-
-            F = self.feature_similarity_service.calculate_separation_matrix(X=X_train, features=data['Features'],
+            F = self.feature_similarity_service.calculate_separation_matrix(X=train[0], features=data['Features'],
                                                                             labels=data['Labels'],
                                                                             distance_measure='Jeffries-Matusita')
-            F_reduced = self.dimension_reduction_service.tsne(F=F, perplexity=10.0)
+            F_reduced = self.dimension_reduction_service.tsne(F=F, fold_index=i + 1, perplexity=10.0)
 
             clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
-                                                                                n_features=len(data['Features']))
+                                                                                K_values=[*range(2, len(data['Features']), 1)],
+                                                                                fold_index=i + 1)
 
-            classification_res = self.classification_service.classify(X=data['Train'][1], y=data['Train'][2],
+            classification_res = self.classification_service.classify(train=(train[1], train[2]), val=(val[1], val[2]),
                                                                       F=F_reduced, clustering_res=clustering_res,
-                                                                      features=list(data['Features']), n_values=5)
-            self.table_service.create_table(classification_res)
+                                                                      features=list(data['Features']),
+                                                                      K_values=[*range(2, len(data['Features']), 1)])
+            self.table_service.create_table(i + 1, classification_res)
+
+            clustering_results[i] = clustering_res
+            classification_results[i] = classification_res
+
+        train_results = self.data_service.get_train_results(classification_results, clustering_results, i)
+
+        return train_results
+
+    @staticmethod
+    def find_best_k_value(train_results: dict) -> dict:
+        x = [res['K'] for res in train_results['Clustering']]
+        y = [res['Silhouette']['Simplified (mean-L0) Heuristic Silhouette'] for res in train_results['Clustering']]
+
+        kn = KneeLocator(
+            x,
+            y,
+            curve='concave',
+            direction='increasing',
+            interp_method='interp1d',
+        )
+
+        kn_res = {
+            'Knee': kn.knee,
+            'Knee y': kn.knee_y,
+            'Knees': kn.all_knees,
+            'Knees y': kn.all_knees_y
+        }
+
+        kn_poly = KneeLocator(
+            x,
+            y,
+            curve='concave',
+            direction='increasing',
+            interp_method='polynomial',
+        )
+
+        kn_poly_res = {
+            'Knee': kn_poly.knee,
+            'Knee y': kn_poly.knee_y,
+            'Knees': kn_poly.all_knees,
+            'Knees y': kn_poly.all_knees_y
+        }
+
+        return {
+            'Interp1d': kn_res,
+            'Polynomial': kn_poly_res
+        }
