@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import pandas as pd
 from skfeature.function.similarity_based.reliefF import reliefF
@@ -7,14 +6,11 @@ from skfeature.function.similarity_based.fisher_score import fisher_score
 LIBRARY_METHOD = ['ReliefF', 'Fisher-Score']
 
 
-def get_distance(metric: str, df: pd.DataFrame, feature: str, label1: str, label2: str) -> float:
+def get_distance(df: pd.DataFrame, feature: str, label1: str, label2: str) -> float:
     """Calculate the similarity distance between the two classes with reference to the given feature
 
     Parameters
     ----------
-    metric : str
-        The distance that measures the similarity of two probability distributions
-
     df : pandas.DataFrame
         Input data
 
@@ -33,19 +29,23 @@ def get_distance(metric: str, df: pd.DataFrame, feature: str, label1: str, label
         similarity distance between the two classes with reference to the given feature
     """
     X1, X2 = np.array(df.loc[df['class'] == label1][feature]), np.array(df.loc[df['class'] == label2][feature])
+    return jm_distance(X1, X2)
 
-    if metric == 'Bhattacharyya':
-        dist = bhattacharyya_distance(X1, X2)
-    elif metric == 'Jeffries-Matusita':
-        dist = jm_distance(X1, X2)
-    elif metric == 'Hellinger':
-        dist = hellinger_distance(X1, X2)
-    elif metric == 'Wasserstein':
-        dist = wasserstein_distance(X1, X2)
-    else:
-        raise ValueError('Metric not implemented.')
 
-    return dist
+def bhattacharyya_distance(p, q):
+    mean_p, mean_q = p.mean(), q.mean()
+    std_p = p.std() if p.std() != 0 else 0.00000000001
+    std_q = q.std() if q.std() != 0 else 0.00000000001
+
+    var_p, var_q = std_p ** 2, std_q ** 2
+    b = (1 / 8) * ((mean_p - mean_q) ** 2) * (2 / (var_p + var_q)) + 0.5 * np.log((var_p + var_q) / (2 * (std_p * std_q)))
+    return b
+
+
+def jm_distance(p, q):
+    b = bhattacharyya_distance(p, q)
+    jm = 2 * (1 - np.exp(-b))
+    return jm
 
 
 def get_library_distance(metric: str, X: pd.DataFrame, Y: pd.DataFrame):
@@ -73,31 +73,3 @@ def get_library_distance(metric: str, X: pd.DataFrame, Y: pd.DataFrame):
         return reliefF(X.to_numpy(), Y)
     elif metric == 'Fisher-Score':
         return fisher_score(X.to_numpy(), Y)
-
-
-def bhattacharyya_distance(p, q):
-    mean_p, mean_q = p.mean(), q.mean()
-    std_p = p.std() if p.std() != 0 else 0.00000000001
-    std_q = q.std() if q.std() != 0 else 0.00000000001
-
-    var_p, var_q = std_p ** 2, std_q ** 2
-    b = (1 / 8) * ((mean_p - mean_q) ** 2) * (2 / (var_p + var_q)) + 0.5 * np.log((var_p + var_q) / (2 * (std_p * std_q)))
-    return b
-
-
-def jm_distance(p, q):
-    b = bhattacharyya_distance(p, q)
-    jm = 2 * (1 - np.exp(-b))
-    return jm
-
-
-def hellinger_distance(p, q):
-    b = bhattacharyya_distance(p, q)
-    hellinger = math.sqrt(1 - b)
-    return hellinger
-
-
-def wasserstein_distance(p, q):
-    from scipy.stats import wasserstein_distance
-    dist = wasserstein_distance(p, q)
-    return dist

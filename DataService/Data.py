@@ -1,4 +1,5 @@
 import time
+import numpy as np
 import pandas as pd
 from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
@@ -100,7 +101,7 @@ class DataService:
          Returns
          -------
          tuple
-             Train and test data as two separate tuples (X_train, y_train) and (X_test, y_test)
+             Train and test data as two separate tuples.
          """
         train, test = train_test_split(df, test_size=test_size, random_state=random_state)
 
@@ -123,7 +124,7 @@ class DataService:
         Returns
         -------
         pandas.DataFrame
-            Features names of the given data set.
+            Feature names of the given data set.
         """
         return X.columns
 
@@ -139,13 +140,29 @@ class DataService:
         Returns
         -------
         pandas.DataFrame
-            Labels names of the given data set.
+            Label names of the given data set.
         """
         labels_names = X['class'].unique()
         return labels_names
 
     @staticmethod
-    def kf_split(data: pd.DataFrame, train_index, val_index) -> tuple:
+    def k_fold_split(data: pd.DataFrame, train_index: np.ndarray, val_index: np.ndarray) -> tuple:
+        """Split data into train and validation sets
+
+         Parameters
+         ----------
+         data : pandas.DataFrame
+             Data frame of the data set
+         train_index : numpy.ndarray
+             Indexes associated with the training set (in the current fold)
+         val_index : numpy.ndarray
+             Indexes associated with the validation set (in the current fold)
+
+         Returns
+         -------
+         tuple
+             Train and validation data as two separate tuples.
+         """
         train = data.iloc[train_index]
         X_train = train.drop('class', axis=1)
         y_train = pd.DataFrame(train['class'])

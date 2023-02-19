@@ -9,8 +9,9 @@ class DimensionReductionService:
         self.log_service = log_service
         self.visualization_service = visualization_service
 
-    def tsne(self, F: pd.DataFrame, fold_index: int, n_components: int = 2, perplexity: int = 30, n_iter: int = 1000) -> pd.DataFrame:
-        """Perform dimension reduction using the TSNE algorithm
+    def tsne(self, F: pd.DataFrame, fold_index: int, n_components: int = 2, perplexity: int = 30,
+             n_iter: int = 1000) -> pd.DataFrame:
+        """Execute dimensionality reduction (using the TSNE algorithm)
 
         Parameters
         ----------
