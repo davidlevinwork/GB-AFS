@@ -16,7 +16,7 @@ class DimensionReductionService:
         Parameters
         ----------
         F : pandas.DataFrame
-            Matrix F with separation values for each feature
+            JM Matrix (with separation values for each feature)
         fold_index: int
             Index of the given k-fold (for saving results & plots)
         n_components : int, optional
@@ -35,7 +35,7 @@ class DimensionReductionService:
         tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter)
         F_reduced = tsne.fit_transform(F)
 
-        self.visualization_service.plot_tsne(F_reduced, 'Jeffries-Matusita', fold_index)
+        self.visualization_service.plot_tsne(F_reduced, fold_index)
 
         end = time.time()
         self.log_service.log('Info', f'[Dimension Reduction Service] : Number of components: ({n_components}) * '

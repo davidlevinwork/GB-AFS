@@ -26,7 +26,7 @@ class VisualizationService:
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to save plot as a file. Error: [{ex}]')
 
-    def plot_tsne(self, data: np.ndarray, distance_measure: str, fold_index: int):
+    def plot_tsne(self, data: np.ndarray, fold_index: int):
         try:
             plt.clf()
             plt.figure(figsize=(10, 8))
@@ -35,15 +35,13 @@ class VisualizationService:
 
             plt.xlabel('First Dimension (x)')
             plt.ylabel('Second Dimension (y)')
-            plt.title(f't-SNE Result\n'
-                      f'{distance_measure}')
+            plt.title(f't-SNE Result')
 
-            self.save_plot(plt, 'Dimensionality Reduction', f'tSNE Graph - [{distance_measure}]', fold_index)
+            self.save_plot(plt, 'Dimensionality Reduction', f'tSNE Graph', fold_index)
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot t-SNE graph. Error: [{ex}]')
 
-    def plot_silhouette(self, clustering_results: list, distance_measure: str, fold_index: int,
-                        sil_min: int = -0.5, sil_max: int = 2.0):
+    def plot_silhouette(self, clustering_results: list, fold_index: int, sil_min: int = -0.5, sil_max: int = 2.0):
         try:
             plt.clf()
             plt.figure(figsize=(12, 10))
@@ -60,11 +58,11 @@ class VisualizationService:
 
             plt.ylim(sil_min, sil_max)
             plt.legend(bbox_to_anchor=(0.7, 1), loc=2, borderaxespad=0.)
-            self.save_plot(plt, 'Silhouette', f'Silhouette Graph - [{distance_measure}]', fold_index)
+            self.save_plot(plt, 'Silhouette', f'Silhouette Graph', fold_index)
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot silhouette graph. Error: [{ex}]')
 
-    def plot_clustering(self, F: pd.DataFrame, clustering_results: list, distance_measure: str, fold_index: int):
+    def plot_clustering(self, F: pd.DataFrame, clustering_results: list, fold_index: int):
         try:
             plt.clf()
             plt.figure(figsize=(12, 10))
@@ -81,16 +79,15 @@ class VisualizationService:
 
                 plt.xlabel('First Dimension (x)')
                 plt.ylabel('Second Dimension (y)')
-                plt.title(f'Clustering Result for K={K}\n'
-                          f'{distance_measure}')
+                plt.title(f'Clustering Result for K={K}')
 
-                self.save_plot(plt, 'Clustering', f'Clustering for K={K} - [{distance_measure}]', fold_index)
+                self.save_plot(plt, 'Clustering', f'Clustering for K={K}', fold_index)
 
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
 
     def plot_accuracy_to_silhouette(self, classification_results: dict, clustering_results: list, knees: dict,
-                                    distance_measure: str, mode: str, sil_min: int = 0.0, sil_max: int = 1.0,
+                                    mode: str, sil_min: int = 0.0, sil_max: int = 1.0,
                                     acc_min: int = 0.0, acc_max: int = 1.0):
         try:
             plt.clf()
@@ -129,6 +126,6 @@ class VisualizationService:
             ax2.axis(ymin=sil_min, ymax=sil_max)
             ax2.legend(bbox_to_anchor=(0.8, 1), loc=2, borderaxespad=0.)
 
-            self.save_plot(plt, 'Accuracy', f'Accuracy-Silhouette {mode} - [{distance_measure}]', 999)
+            self.save_plot(plt, 'Accuracy', f'Accuracy-Silhouette {mode}', 999)
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot accuracy graph. Error: [{ex}]')
