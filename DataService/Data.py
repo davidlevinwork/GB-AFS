@@ -1,6 +1,5 @@
 import time
 import pandas as pd
-from collections import defaultdict
 from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -12,6 +11,18 @@ class DataService:
         self.visualization_service = visualization_service
 
     def execute_data_service(self, data_set: str) -> dict:
+        """Main function of data service.
+
+        Parameters
+        ----------
+        data_set : str
+            Data set name
+
+        Returns
+        -------
+        dict
+            Dictionary that contains all the relevant information of the given data set.
+        """
         start = time.time()
 
         results = {}
@@ -34,12 +45,12 @@ class DataService:
 
     @staticmethod
     def load_data(data_set: str) -> pd.DataFrame:
-        """Load data
+        """Load data.
 
         Parameters
         ----------
-        data_set : pandas.DataFrame
-            Input data
+        data_set : str
+            Dataset name
 
         Returns
         -------
@@ -48,6 +59,30 @@ class DataService:
         """
         df = pd.DataFrame(pd.read_csv(f'./Datasets/{data_set}.csv'))
         return df
+
+    @staticmethod
+    def normalize_features(X: pd.DataFrame) -> pd.DataFrame:
+        """Normalize the feature values to [0, 1] range.
+
+        Parameters
+        ----------
+        X : pandas.DataFrame
+            Input data
+
+        Returns
+        -------
+        pandas.DataFrame
+            Normalized input data.
+        """
+        column_names = X.columns
+        cols_to_normalize = X.columns.difference(['class'])
+
+        scaler = MinMaxScaler()
+
+        X[cols_to_normalize] = scaler.fit_transform(X[cols_to_normalize])
+        X.columns = column_names
+
+        return X
 
     @staticmethod
     def train_test_split(df: pd.DataFrame, test_size: float = 0.25, random_state: int = 42) -> tuple:
@@ -77,18 +112,6 @@ class DataService:
         return (train, X_train, y_train), (test, X_test, y_test)
 
     @staticmethod
-    def kf_split(data: pd.DataFrame, train_index, val_index):
-        train = data.iloc[train_index]
-        X_train = train.drop('class', axis=1)
-        y_train = pd.DataFrame(train['class'])
-
-        val = data.iloc[val_index]
-        X_val = val.drop('class', axis=1)
-        y_val = pd.DataFrame(val['class'])
-
-        return (train, X_train, y_train), (val, X_val, y_val)
-
-    @staticmethod
     def get_features(X: pd.DataFrame) -> pd.DataFrame:
         """Extract features names
 
@@ -103,19 +126,6 @@ class DataService:
             Features names of the given data set.
         """
         return X.columns
-
-    @staticmethod
-    def normalize_features(X: pd.DataFrame) -> pd.DataFrame:
-        # Select the columns to normalize
-        column_names = X.columns
-        cols_to_normalize = X.columns.difference(['class'])
-
-        scaler = MinMaxScaler()
-
-        X[cols_to_normalize] = scaler.fit_transform(X[cols_to_normalize])
-        X.columns = column_names
-
-        return X
 
     @staticmethod
     def get_labels(X: pd.DataFrame) -> pd.DataFrame:
@@ -133,6 +143,18 @@ class DataService:
         """
         labels_names = X['class'].unique()
         return labels_names
+
+    @staticmethod
+    def kf_split(data: pd.DataFrame, train_index, val_index) -> tuple:
+        train = data.iloc[train_index]
+        X_train = train.drop('class', axis=1)
+        y_train = pd.DataFrame(train['class'])
+
+        val = data.iloc[val_index]
+        X_val = val.drop('class', axis=1)
+        y_val = pd.DataFrame(val['class'])
+
+        return (train, X_train, y_train), (val, X_val, y_val)
 
     @staticmethod
     def get_train_results(classification_results: dict, clustering_results: list, n_folds: int) -> dict:
