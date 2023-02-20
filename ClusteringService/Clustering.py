@@ -48,6 +48,7 @@ class ClusteringService:
         results = self.arrange_results(results)
         self.visualization_service.plot_silhouette(results, stage, fold_index)
         self.visualization_service.plot_clustering(F, results, stage, fold_index)
+        self.visualization_service.plot_upgrade_clustering(F, results, stage, fold_index)
 
         end = time.time()
         self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end - start, 3)}]')

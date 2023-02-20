@@ -36,10 +36,12 @@ class VisualizationService:
             plt.clf()
             plt.figure(figsize=(10, 8))
 
-            plt.plot(data[:, 0], data[:, 1], 'o')
+            c = data[:, 0] + data[:, 1]
+            plt.scatter(x=data[:, 0], y=data[:, 1], marker='o', c=c, cmap='viridis')
 
             plt.xlabel('First Dimension (x)')
             plt.ylabel('Second Dimension (y)')
+            plt.colorbar()
             plt.title(f't-SNE Result')
 
             self.save_plot(plt, stage, 'Dimensionality Reduction', f'{fold_index}', 't-SNE')
@@ -86,6 +88,28 @@ class VisualizationService:
                 plt.title(f'Clustering Result for K={K}')
 
                 self.save_plot(plt, stage, 'Clustering', f'{fold_index}', f'Clustering for K={K}')
+
+        except AssertionError as ex:
+            self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
+
+    def plot_upgrade_clustering(self, F: pd.DataFrame, clustering_results: list, stage: str, fold_index: int):
+        try:
+            plt.clf()
+            plt.figure(figsize=(10, 8))
+
+            c = F[:, 0] + F[:, 1]
+            for clustering_result in clustering_results:
+                K = clustering_result['K']
+                centroids = clustering_result['Kmedoids']['Centroids']
+                plt.scatter(F[:, 0], F[:, 1], c=c, cmap='viridis')
+                plt.scatter(centroids[:, 0], centroids[:, 1], marker='x', color='red', s=40)
+
+                plt.colorbar()
+                plt.xlabel('First Dimension (x)')
+                plt.ylabel('Second Dimension (y)')
+                plt.title(f'Clustering Result for K={K}')
+
+                self.save_plot(plt, stage, 'U-Clustering', f'{fold_index}', f'Clustering for K={K}')
 
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')

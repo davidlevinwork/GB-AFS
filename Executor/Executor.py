@@ -59,7 +59,7 @@ class Executor:
         classification_results = {}
 
         # Initialize the KFold object with k splits and shuffle the data
-        kf = KFold(n_splits=3, shuffle=True, random_state=42)
+        kf = KFold(n_splits=2, shuffle=True, random_state=42)
 
         for i, (train_index, val_index) in enumerate(kf.split(data['Train'][0])):
             self.log_service.log('Info', f'[Executor] : ******************** Fold Number #{i + 1} ********************')
