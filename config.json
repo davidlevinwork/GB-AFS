@@ -1,0 +1,21 @@
+{
+    "dataset": {
+		"name": "_Cardiotocography",
+		"path": "./Datasets/_Cardiotocography.csv",
+		"labels_column_name": "class"
+    },
+	"algorithm_properties": {
+		"KFold": 5,
+		"split_ratio": "75-25",
+		"metric": "Jeffries-Matusita"
+	},
+	"t_SNE": {
+		"n_iter": 1000,
+		"perplexity": 10,
+		"n_components": 2
+	},
+	"K_Medoid": {
+		"method": "pam",
+		"init": "k-medoids++"
+	}
+}
