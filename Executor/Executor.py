@@ -48,10 +48,10 @@ class Executor:
         train_results = self.execute_full_algorithm(data)
         knees = find_knees(train_results)
         K_values = list(set([knees['Interp1d']['Knee']] + [knees['Polynomial']['Knee']]))
-        self.visualization_service.plot_accuracy_to_silhouette(classification_results=train_results['Classification'],
-                                                               clustering_results=train_results['Clustering'],
+        self.visualization_service.plot_accuracy_to_silhouette(classification_res=train_results['Classification'],
+                                                               clustering_res=train_results['Clustering'],
                                                                knees=knees,
-                                                               mode='Train')
+                                                               stage='Train')
         return K_values
 
     def execute_full_algorithm(self, data: dict) -> dict:
@@ -59,7 +59,7 @@ class Executor:
         classification_results = {}
 
         # Initialize the KFold object with k splits and shuffle the data
-        kf = KFold(n_splits=5, shuffle=True, random_state=42)
+        kf = KFold(n_splits=3, shuffle=True, random_state=42)
 
         for i, (train_index, val_index) in enumerate(kf.split(data['Train'][0])):
             self.log_service.log('Info', f'[Executor] : ******************** Fold Number #{i + 1} ********************')
@@ -76,12 +76,14 @@ class Executor:
 
             # Reduce dimensionality & Create a feature graph
             F_reduced = self.dimension_reduction_service.tsne(F=F,
+                                                              stage="Train",
                                                               fold_index=i+1,
                                                               perplexity=10.0)
 
             # Execute clustering service (K-Medoid + Silhouette)
             K_values = [*range(2, len(data['Features']), 1)]
             clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
+                                                                                stage="Train",
                                                                                 K_values=K_values,
                                                                                 fold_index=i+1)
 
@@ -97,7 +99,8 @@ class Executor:
                                                                       features=list(data['Features']),
                                                                       K_values=K_values)
             # Create results table
-            self.table_service.create_table(index=f"{i+1}",
+            self.table_service.create_table(fold_index=f"{i+1}",
+                                            stage="Train",
                                             classification_res=classification_res)
 
             clustering_results[i] = clustering_res
@@ -119,22 +122,26 @@ class Executor:
 
         # Reduce dimensionality & Create a feature graph
         F_reduced = self.dimension_reduction_service.tsne(F=F,
-                                                          fold_index=1000,
+                                                          stage=log_mode,
+                                                          fold_index=0,
                                                           perplexity=10.0)
 
         # Execute clustering service (K-Medoid + Silhouette)
         clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
+                                                                            stage=log_mode,
                                                                             K_values=K_values,
-                                                                            fold_index=1000)
+                                                                            fold_index=0)
         # Execute classification service
         fixed_data = {
             f'{mode}': (data[f'{mode}'][1], data[f'{mode}'][2])
         }
-        classification_res = self.classification_service.classify(mode=f'{log_mode}',
+        classification_res = self.classification_service.classify(mode=log_mode,
                                                                   data=fixed_data,
                                                                   F=F_reduced,
                                                                   clustering_res=clustering_res,
                                                                   features=list(data['Features']),
                                                                   K_values=K_values)
         # Create results table
-        self.table_service.create_table(f'{log_mode}', classification_res)
+        self.table_service.create_table(fold_index="0",
+                                        stage=f'{log_mode}',
+                                        classification_res=classification_res)

@@ -96,9 +96,9 @@ def get_train_clustering(results: dict) -> list:
     return combined_results
 
 
-##################################################
-# Auxiliary functions for managing train results #
-##################################################
+#############################################################################
+# Auxiliary function for getting 'best' K values according to train results #
+#############################################################################
 
 def find_knees(train_results: dict) -> dict:
     """Find the potential K values to stop the algorithm ("knees")

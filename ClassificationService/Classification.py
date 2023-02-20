@@ -1,4 +1,3 @@
-import math
 import time
 import numpy as np
 import pandas as pd
@@ -6,9 +5,8 @@ import concurrent.futures
 from sklearn import tree
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import KFold, cross_validate, cross_val_score
+from sklearn.model_selection import KFold, cross_val_score
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.metrics import make_scorer, accuracy_score, precision_score, recall_score, f1_score
 
 NUMBER_OF_TEST_EPOCHS = 1
 NUMBER_OF_TRAIN_EPOCHS = 10
@@ -25,26 +23,35 @@ class ClassificationService:
                             AdaBoostClassifier()]
         self.cv = KFold(n_splits=10, random_state=41, shuffle=True)
 
-    def classify(self, train: (pd.DataFrame, pd.DataFrame), val: (pd.DataFrame, pd.DataFrame), F: np.ndarray,
-                 clustering_res: list, features: list, K_values: list) -> dict:
+    def classify(self, mode: str, data: dict, F: np.ndarray, clustering_res: list, features: list,
+                 K_values: list) -> dict:
 
-        if val is not None:
+        if mode == 'Train':
             # Train
-            X, y = train[0], train[1]
+            X, y = data['Train'][0], data['Train'][1]
             train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Train')
-            # Test
-            X, y = val[0], val[1]
-            test_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Test')
-        else:
-            # Train
-            X, y = train[0], train[1]
-            train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'SIGN')
-            test_res = train_res
 
-        return {
-            "Train": train_res,
-            "Test": test_res
-        }
+            # Validation
+            X, y = data['Validation'][0], data['Validation'][1]
+            test_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Test')
+
+            results = {"Train": train_res, "Test": test_res}
+
+        if mode == 'Full Train':
+            # (All) Train
+            X, y = data['Train'][0], data['Train'][1]
+            train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'SIGN')
+
+            results = {"Train": train_res, "Test": train_res}
+
+        if mode == 'Test':
+            # Test
+            X, y = data['Test'][0], data['Test'][1]
+            train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'SIGN')
+
+            results = {"Train": train_res, "Test": train_res}
+
+        return results
 
     def execute_classification_service(self, X: pd.DataFrame, y: pd.DataFrame, F: np.ndarray, clustering_res: list,
                                        features: list, K_values: list, mode: str) -> dict:
@@ -122,14 +129,6 @@ class ClassificationService:
             'Classifiers': classifiers_str
         }
 
-    @staticmethod
-    def custom_scorer(y_true, y_pred):
-        return {'accuracy': accuracy_score(y_true, y_pred),
-                'precision': precision_score(y_true, y_pred, average='weighted'),
-                'recall': recall_score(y_true, y_pred, average='weighted'),
-                'f1': f1_score(y_true, y_pred, average='weighted')
-                }
-
     def arrange_results(self, results: list) -> dict:
         b_results = results
         for result in sorted(results, key=lambda x: x['K']):
@@ -139,10 +138,9 @@ class ClassificationService:
                                              f'({classifier}) --> ({round(classifier_res, 3)})')
 
         new_results = {
-            'Results By K': sorted(results, key=lambda x: x['K']),
-            'Results By Accuracy': sorted(results, key=lambda x: sum(x['Mean'].values()) / len(x['Mean']),
-                                          reverse=True),
-            'Results By Classifiers': self.arrange_results_by_classifier(b_results)
+           'Results By K': sorted(results, key=lambda x: x['K']),
+           'Results By Accuracy': sorted(results, key=lambda x: sum(x['Mean'].values()) / len(x['Mean']), reverse=True),
+           'Results By Classifiers': self.arrange_results_by_classifier(b_results)
         }
         return new_results
 
@@ -162,17 +160,3 @@ class ClassificationService:
             new_results[classifier] = dict(sorted(classifiers_res.items(), key=lambda item: item[0]))
 
         return new_results
-
-    def choose_K_test_values(self, train_res: dict, n_features: int, n_values: int) -> list:
-        # Default values
-        K_values = [  # n_features,
-            math.ceil((1 / 4) * n_features),
-            math.ceil((1 / 8) * n_features),
-            math.ceil((1 / 16) * n_features)]
-        if n_features > 32:
-            K_values.append(math.ceil((1 / 32) * n_features))
-
-        # Best 'n_values' K values by accuracy
-        K_values += [int(result['K']) for result in train_res if int(result['K']) not in K_values][:n_values]
-        K_values = sorted(K_values)
-        return K_values

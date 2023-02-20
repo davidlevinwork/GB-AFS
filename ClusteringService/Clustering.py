@@ -12,7 +12,7 @@ class ClusteringService:
         self.log_service = log_service
         self.visualization_service = visualization_service
 
-    def execute_clustering_service(self, F: pd.DataFrame, K_values: list, fold_index: int) -> list:
+    def execute_clustering_service(self, F: pd.DataFrame, K_values: list, stage: str, fold_index: int) -> list:
         """Get all the possible combinations of the given labels
 
         Parameters
@@ -22,6 +22,9 @@ class ClusteringService:
 
         K_values: list
             K values that we want to test
+
+        stage: str
+            Stage of the algorithm (Train, Full Train, Test)
 
         fold_index: int
             Index of the given k-fold (for saving results & plots)
@@ -43,8 +46,8 @@ class ClusteringService:
                 results.append(task.result())
 
         results = self.arrange_results(results)
-        self.visualization_service.plot_silhouette(results, fold_index)
-        self.visualization_service.plot_clustering(F, results, fold_index)
+        self.visualization_service.plot_silhouette(results, stage, fold_index)
+        self.visualization_service.plot_clustering(F, results, stage, fold_index)
 
         end = time.time()
         self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end - start, 3)}]')
@@ -71,8 +74,9 @@ class ClusteringService:
 
         results['K'] = K
         results['Kmedoids'] = ClusteringService.run_kmedoids(F, K)
-        results['Silhouette'] = ClusteringService.calculate_silhouette_value(F, results['Kmedoids']['Labels'],
-                                                                             results['Kmedoids']['Centroids'])
+        results['Silhouette'] = ClusteringService.calculate_silhouette_value(X=F,
+                                                                             y=results['Kmedoids']['Labels'],
+                                                                             centroids=results['Kmedoids']['Centroids'])
         return results
 
     @staticmethod
