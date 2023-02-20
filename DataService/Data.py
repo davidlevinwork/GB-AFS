@@ -1,7 +1,6 @@
 import time
 import numpy as np
 import pandas as pd
-from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
@@ -172,51 +171,3 @@ class DataService:
         y_val = pd.DataFrame(val['class'])
 
         return (train, X_train, y_train), (val, X_val, y_val)
-
-    @staticmethod
-    def get_train_results(classification_results: dict, clustering_results: list, n_folds: int) -> dict:
-        clustering = DataService.get_train_clustering(clustering_results)
-        classification = DataService.get_train_classification(classification_results, n_folds)
-
-        return {
-            'Clustering': clustering,
-            'Classification': classification
-        }
-
-    @staticmethod
-    def get_train_classification(results: dict, n_folds: int) -> dict:
-        # Init with the results of the first fold
-        combined_results = results[0]['Test']['Results By Classifiers']
-
-        # Sum
-        for i in range(1, n_folds):
-            classifiers = results[i]['Test']['Results By Classifiers']
-            for classifier, classifier_results in classifiers.items():
-                combined_results[classifier] = dict(Counter(combined_results[classifier]) + Counter(classifier_results))
-
-        # Divide
-        for classifier, classifier_results in combined_results.items():
-            combined_results[classifier] = [x / n_folds for x in list(combined_results[classifier].values())]
-
-        return combined_results
-
-    @staticmethod
-    def get_train_clustering(results: list) -> list:
-        # Init with the results of the first fold
-        combined_results = results[0]
-
-        # Sum
-        for i in range(1, len(results)):
-            for j, result in enumerate(results[i]):
-                k = result['K']
-                sub_results = result['Silhouette']
-                for sil_name, sil_value in sub_results.items():
-                    combined_results[j]['Silhouette'][sil_name] += sil_value
-
-        # Divide
-        for result in combined_results:
-            sub_results = result['Silhouette']
-            for sil_name, sil_value in sub_results.items():
-                sub_results[sil_name] /= len(results)
-
-        return combined_results

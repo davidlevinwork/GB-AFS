@@ -5,7 +5,7 @@ from prettytable import PrettyTable
 
 class TableService:
     @staticmethod
-    def create_table(index: int, classification_res: dict):
+    def create_table(index: str, classification_res: dict):
         test_results = classification_res['Test']['Results By K']
         train_results = classification_res['Train']['Results By K']
 

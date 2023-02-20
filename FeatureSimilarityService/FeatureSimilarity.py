@@ -29,7 +29,7 @@ class FeatureSimilarityService:
         """
         start = time.time()
         label_combinations = FeatureSimilarityService.get_label_combinations(labels)
-        separation_matrix = FeatureSimilarityService.init_feature_separation_matrix(features, labels)
+        separation_matrix = FeatureSimilarityService.init_JM_matrix(features, labels)
 
         for i, feature in enumerate(features):                                      # Iterate over the features
             for j, labels in enumerate(label_combinations):                         # Iterate over each pairs of classes
@@ -65,7 +65,7 @@ class FeatureSimilarityService:
         return combinations
 
     @staticmethod
-    def init_feature_separation_matrix(features: pd.DataFrame, labels: pd.DataFrame) -> np.ndarray:
+    def init_JM_matrix(features: pd.DataFrame, labels: pd.DataFrame) -> np.ndarray:
         """Init an empty JM matrix
 
         Parameters
