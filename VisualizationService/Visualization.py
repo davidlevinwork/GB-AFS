@@ -94,11 +94,11 @@ class VisualizationService:
 
     def plot_upgrade_clustering(self, F: pd.DataFrame, clustering_results: list, stage: str, fold_index: int):
         try:
-            plt.clf()
-            plt.figure(figsize=(10, 8))
-
             c = F[:, 0] + F[:, 1]
             for clustering_result in clustering_results:
+                plt.clf()
+                plt.figure(figsize=(10, 8))
+
                 K = clustering_result['K']
                 centroids = clustering_result['Kmedoids']['Centroids']
                 plt.scatter(F[:, 0], F[:, 1], c=c, cmap='viridis')
