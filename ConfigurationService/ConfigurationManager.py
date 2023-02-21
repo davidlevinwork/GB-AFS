@@ -23,8 +23,8 @@ class ConfigManager:
         return self.config.get('algorithm_properties')['KFold']
 
     @property
-    def get_data_split_ratio(self):
-        return self.config.get('algorithm_properties')['split_ratio']
+    def get_data_val_ratio(self):
+        return self.config.get('algorithm_properties')['val_ratio']
 
     @property
     def get_metric(self):

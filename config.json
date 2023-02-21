@@ -1,12 +1,12 @@
 {
     "dataset": {
-		"name": "_Cardiotocography",
-		"path": "./Datasets/_Cardiotocography.csv",
+		"name": "Cardiotocography",
+		"path": "./Datasets/Cardiotocography.csv",
 		"labels_column_name": "class"
     },
 	"algorithm_properties": {
-		"KFold": 5,
-		"split_ratio": "75-25",
+		"KFold": 4,
+		"val_ratio": 25,
 		"metric": "Jeffries-Matusita"
 	},
 	"t_SNE": {
