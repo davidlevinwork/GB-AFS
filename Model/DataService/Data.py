@@ -57,7 +57,7 @@ class DataService:
         pandas.DataFrame
             Processed data as a data frame.
         """
-        df = pd.DataFrame(pd.read_csv(f'./Datasets/{data_set}.csv'))
+        df = pd.DataFrame(pd.read_csv(f'./Model/Datasets/{data_set}.csv'))
         return df
 
     @staticmethod

@@ -4,7 +4,7 @@ import glob
 import shutil
 from datetime import datetime
 
-log_file_name = os.path.join(os.getcwd(), "Files", "Log.txt")
+log_file_name = os.path.join(os.getcwd(), "Model", "Files", "Log.txt")
 
 
 class LogService:

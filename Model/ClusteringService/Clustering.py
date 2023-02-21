@@ -4,7 +4,7 @@ from array import array
 import concurrent.futures
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
-from ClusteringService.Silhouette import simplified_silhouette
+from Model.ClusteringService.Silhouette import simplified_silhouette
 
 
 class ClusteringService:

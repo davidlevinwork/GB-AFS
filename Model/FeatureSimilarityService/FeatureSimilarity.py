@@ -2,7 +2,7 @@ import math
 import time
 import numpy as np
 import pandas as pd
-from FeatureSimilarityService.Distances import get_distance
+from Model.FeatureSimilarityService.Distances import get_distance
 
 
 class FeatureSimilarityService:

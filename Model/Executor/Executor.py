@@ -1,14 +1,14 @@
-from LogService import Log
-from DataService import Data
-from TableService import Table
-from ClusteringService import Clustering
-from VisualizationService import Visualization
-from ClassificationService import Classification
-from FeatureSimilarityService import FeatureSimilarity
-from DimensionReductionService import DimensionReduction
+from Model.LogService import Log
+from Model.DataService import Data
+from Model.TableService import Table
+from Model.ClusteringService import Clustering
+from Model.VisualizationService import Visualization
+from Model.ClassificationService import Classification
+from Model.FeatureSimilarityService import FeatureSimilarity
+from Model.DimensionReductionService import DimensionReduction
 
 from sklearn.model_selection import KFold
-from utils import get_train_results, find_knees
+from Model.utils import get_train_results, find_knees
 
 
 class Executor:
@@ -36,7 +36,7 @@ class Executor:
 
     def execute(self):
         # Prepare the data
-        data = self.data_service.execute_data_service(data_set='_Cardiotocography')
+        data = self.data_service.execute_data_service(data_set='Cardiotocography')
         # STAGE 1 --> Train stage
         K_values = self.execute_train(data=data)
         # STAGE 2 --> Full train stage
@@ -59,7 +59,7 @@ class Executor:
         classification_results = {}
 
         # Initialize the KFold object with k splits and shuffle the data
-        kf = KFold(n_splits=2, shuffle=True, random_state=42)
+        kf = KFold(n_splits=3, shuffle=True, random_state=42)
 
         for i, (train_index, val_index) in enumerate(kf.split(data['Train'][0])):
             self.log_service.log('Info', f'[Executor] : ******************** Fold Number #{i + 1} ********************')

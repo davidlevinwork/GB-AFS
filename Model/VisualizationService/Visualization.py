@@ -18,8 +18,8 @@ class VisualizationService:
             current_dir = os.path.dirname(__file__)
             if stage == 'Train':
                 results_dir = \
-                    os.path.join(current_dir, '../', 'Files/', 'Plots/', f'{time_stamp}', f'{stage}',
-                                 f'Fold #{fold_index}/', f'{header}')
+                    os.path.join(current_dir, '../', 'Files', 'Plots', f'{time_stamp}', f'{stage}',
+                                 f'Fold #{fold_index}', f'{header}')
             else:
                 results_dir = \
                     os.path.join(current_dir, '../', 'Files/', 'Plots/', f'{time_stamp}', f'{stage}', f'{header}')
@@ -39,8 +39,8 @@ class VisualizationService:
             c = data[:, 0] + data[:, 1]
             plt.scatter(x=data[:, 0], y=data[:, 1], marker='o', c=c, cmap='viridis')
 
-            plt.xlabel('First Dimension (x)')
-            plt.ylabel('Second Dimension (y)')
+            plt.xlabel(r'$\lambda_1\psi_1$')
+            plt.ylabel(r'$\lambda_2\psi_2$')
             plt.colorbar()
             plt.title(f't-SNE Result')
 
@@ -83,11 +83,13 @@ class VisualizationService:
 
                 plt.scatter(centroids[:, 0], centroids[:, 1], marker='o', color='black', facecolors='none')
 
-                plt.xlabel('First Dimension (x)')
-                plt.ylabel('Second Dimension (y)')
+                plt.xlabel(r'$\lambda_1\psi_1$')
+                plt.ylabel(r'$\lambda_2\psi_2$')
                 plt.title(f'Clustering Result for K={K}')
 
                 self.save_plot(plt, stage, 'Clustering', f'{fold_index}', f'Clustering for K={K}')
+
+                plt.close()
 
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
@@ -105,11 +107,13 @@ class VisualizationService:
                 plt.scatter(centroids[:, 0], centroids[:, 1], marker='x', color='red', s=40)
 
                 plt.colorbar()
-                plt.xlabel('First Dimension (x)')
-                plt.ylabel('Second Dimension (y)')
+                plt.xlabel(r'$\lambda_1\psi_1$')
+                plt.ylabel(r'$\lambda_2\psi_2$')
                 plt.title(f'Clustering Result for K={K}')
 
                 self.save_plot(plt, stage, 'U-Clustering', f'{fold_index}', f'Clustering for K={K}')
+
+                plt.close()
 
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')

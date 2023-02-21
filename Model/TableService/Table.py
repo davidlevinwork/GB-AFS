@@ -29,7 +29,7 @@ class TableService:
     def save_table(fold_index, stage, table):
         try:
             current_dir = os.path.dirname(__file__)
-            plots_dir = os.path.join(current_dir, '../', 'Files/', 'Plots/')
+            plots_dir = os.path.join(current_dir, '..', 'Files', 'Plots')
             latest_plot_dir = max(glob.glob(os.path.join(plots_dir, '*/')), key=os.path.getmtime).rsplit('\\', 1)[0]
 
             if stage == "Train":
