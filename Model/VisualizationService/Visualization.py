@@ -51,19 +51,37 @@ class VisualizationService:
     def plot_silhouette(self, clustering_results: list, stage: str, fold_index: int):
         try:
             plt.clf()
-            plt.figure(figsize=(12, 10))
+            fig, ax = plt.subplots(figsize=(8, 6))
 
-            # Get the colors from the color map
-            c_index = 0
-            colors = [self.cmap(i) for i in np.linspace(0, 1, len(clustering_results[0]['Silhouette'].keys()))]
+            colors = ['red', 'green', 'blue']
 
-            for sil_type in list(clustering_results[0]['Silhouette'].keys()):
+            for sil_type, color in zip(list(clustering_results[0]['Silhouette'].keys()), colors):
                 k_values = [res['K'] for res in clustering_results]
                 sil_values = [res['Silhouette'][sil_type] for res in clustering_results]
-                plt.plot(k_values, sil_values, label=sil_type, linestyle="solid", c=colors[c_index])
-                c_index += 1
+                ax.plot(k_values, sil_values, label=sil_type, linestyle='--', c=color)
 
-            plt.legend(bbox_to_anchor=(0.7, 1), loc=2, borderaxespad=0.)
+            yticks = []
+            for i in range(1, 10):
+                yticks.append(i / 10)
+
+            ax.grid(True, linestyle='-.', color='gray')
+
+            # Set x and y axis limits to start from 0
+            ax.set_ylim(0, 1)
+            ax.set_xlim(0, max(k_values))
+
+            # Show only the bottom and left ticks
+            ax.xaxis.set_ticks_position('bottom')
+            ax.yaxis.set_ticks_position('left')
+
+            # Plot labels
+            ax.set_yticks(yticks)
+            ax.set_xlabel('K values')
+            ax.set_ylabel('Silhouette value')
+            ax.set_title('Silhouette Graph')
+            ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.08), ncol=3, shadow=True, fancybox=True)
+
+            plt.tight_layout()
             self.save_plot(plt, stage, 'Silhouette', f'{fold_index}', 'Silhouette Graph')
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot silhouette graph. Error: [{ex}]')
@@ -71,7 +89,7 @@ class VisualizationService:
     def plot_clustering(self, F: pd.DataFrame, clustering_results: list, stage: str, fold_index: int):
         try:
             plt.clf()
-            plt.figure(figsize=(12, 10))
+            fig, ax = plt.subplots(figsize=(8, 6))
 
             for clustering_result in clustering_results:
                 K = clustering_result['K']
@@ -83,12 +101,21 @@ class VisualizationService:
 
                 plt.scatter(centroids[:, 0], centroids[:, 1], marker='o', color='black', facecolors='none')
 
+                # Plot labels
                 plt.xlabel(r'$\lambda_1\psi_1$')
                 plt.ylabel(r'$\lambda_2\psi_2$')
-                plt.title(f'Clustering Result for K={K}')
+                plt.title(f'Clustering Result [K={K}]')
 
+                # Show only the bottom and left ticks
+                ax.xaxis.set_ticks_position('bottom')
+                ax.yaxis.set_ticks_position('left')
+
+                # Remove top and right spines
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+
+                plt.tight_layout()
                 self.save_plot(plt, stage, 'Clustering', f'{fold_index}', f'Clustering for K={K}')
-
                 plt.close()
 
         except AssertionError as ex:
@@ -99,20 +126,29 @@ class VisualizationService:
             c = F[:, 0] + F[:, 1]
             for clustering_result in clustering_results:
                 plt.clf()
-                plt.figure(figsize=(10, 8))
+                fig, ax = plt.subplots(figsize=(8, 6))
 
                 K = clustering_result['K']
                 centroids = clustering_result['Kmedoids']['Centroids']
                 plt.scatter(F[:, 0], F[:, 1], c=c, cmap='viridis')
-                plt.scatter(centroids[:, 0], centroids[:, 1], marker='x', color='red', s=40)
+                plt.scatter(centroids[:, 0], centroids[:, 1], marker='x', color='red', s=30)
 
+                # Plot labels
                 plt.colorbar()
                 plt.xlabel(r'$\lambda_1\psi_1$')
                 plt.ylabel(r'$\lambda_2\psi_2$')
-                plt.title(f'Clustering Result for K={K}')
+                plt.title(f'Clustering Result [K={K}]')
 
+                # Show only the bottom and left ticks
+                ax.xaxis.set_ticks_position('bottom')
+                ax.yaxis.set_ticks_position('left')
+
+                # Remove top and right spines
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+
+                plt.tight_layout()
                 self.save_plot(plt, stage, 'U-Clustering', f'{fold_index}', f'Clustering for K={K}')
-
                 plt.close()
 
         except AssertionError as ex:
@@ -121,7 +157,7 @@ class VisualizationService:
     def plot_accuracy_to_silhouette(self, classification_res: dict, clustering_res: list, knees: dict, stage: str):
         try:
             plt.clf()
-            fig, ax = plt.subplots(figsize=(12, 10))
+            fig, ax = plt.subplots(figsize=(8, 6))
 
             # Get the colors from the color map
             c_index = 0
@@ -131,29 +167,53 @@ class VisualizationService:
             # Left Y axis (accuracy)
             for classifier, classifier_val in classification_res.items():
                 x_values = [*range(2, len(classification_res[classifier]) + 2, 1)]
-                ax.plot(x_values, classifier_val, linestyle="-.", label=f'{str(classifier)}',
-                        c=colors[c_index])
+                label = VisualizationService.get_classifier_label(str(classifier))
+                ax.plot(x_values, classifier_val, linestyle="-.", label=label, c=colors[c_index])
                 c_index += 1
 
             ax.set_xlabel("K value")
             ax.set_ylabel("Accuracy")
-            ax.legend(bbox_to_anchor=(0.01, 1), loc=2, borderaxespad=0.)
+            ax.grid(True, linestyle='-.')
+            ax.spines['top'].set_visible(False)
+            # ax.legend(loc='lower left', bbox_to_anchor=(0, 1.02, 1, 0.2), ncol=4, shadow=True, fancybox=True)
 
             # Right Y axis (silhouette)
             ax2 = ax.twinx()
             for sil_type in list(clustering_res[0]['Silhouette'].keys()):
                 k_values = [res['K'] for res in clustering_res]
                 sil_values = [res['Silhouette'][sil_type] for res in clustering_res]
-                plt.plot(k_values, sil_values, label=sil_type, linestyle="solid", c=colors[c_index])
+                ax2.plot(k_values, sil_values, label=sil_type, linestyle="solid", c=colors[c_index])
                 c_index += 1
+
+            # get handles and labels for both axes
+            handles1, labels1 = ax.get_legend_handles_labels()
+            handles2, labels2 = ax2.get_legend_handles_labels()
+            handles = handles1 + handles2
+            labels = labels1 + labels2
+
+            ax.legend(handles, labels, loc='lower left', bbox_to_anchor=(0, 1.02, 1, 0.2),
+                      ncol=4, shadow=True, fancybox=True)
 
             # Knees
             for knee, knee_values in knees.items():
-                plt.axvline(x=knee_values['Knee'], label=str(knee), c=colors[c_index])
+                ax2.axvline(x=knee_values['Knee'], linestyle='dotted', c='red')
+                ax2.text(knee_values['Knee'], 0.1, 'KNEE', rotation=90, color='red')
 
             ax2.set_ylabel("Silhouette Value")
-            ax2.legend(bbox_to_anchor=(0.8, 1), loc=2, borderaxespad=0.)
+            ax2.spines['top'].set_visible(False)
 
             self.save_plot(plt, stage, 'Accuracy', 'Final', 'Accuracy-Silhouette')
         except AssertionError as ex:
             self.log_service.log('Error', f'[Visualization Service] - Failed to plot accuracy graph. Error: [{ex}]')
+
+    @staticmethod
+    def get_classifier_label(classifier):
+        if classifier == "LogisticRegression":
+            return "Log. Reg."
+        if classifier == "DecisionTreeClassifier":
+            return "Dec. Tree"
+        if classifier == "KNeighborsClassifier":
+            return "KNN"
+        if classifier == "RandomForestClassifier":
+            return "Ran. Forest"
+

@@ -7,8 +7,15 @@ from Model.ClassificationService import Classification
 from Model.FeatureSimilarityService import FeatureSimilarity
 from Model.DimensionReductionService import DimensionReduction
 
+import pandas
+import numpy as np
+from random import sample
 from sklearn.model_selection import KFold
 from Model.utils import get_train_results, find_knees
+from skfeature.function.statistical_based.CFS import cfs
+from skfeature.function.similarity_based.reliefF import reliefF
+from skfeature.function.information_theoretical_based.MRMR import mrmr
+from skfeature.function.similarity_based.fisher_score import fisher_score
 
 
 class Executor:
@@ -36,30 +43,36 @@ class Executor:
 
     def execute(self):
         # Prepare the data
-        data = self.data_service.execute_data_service(data_set='Cardiotocography')
+        data = self.data_service.execute_data_service(data_set='Microsoft_Malware_Sample')
         # STAGE 1 --> Train stage
         K_values = self.execute_train(data=data)
         # STAGE 2 --> Full train stage
-        self.execute_semi_algorithm(data=data, K_values=K_values, mode="Train", log_mode="Full Train")
+        final_features = self.execute_full_train(data=data, K_values=K_values)
         # STAGE 3 --> Test stage
-        self.execute_semi_algorithm(data=data, K_values=K_values, mode="Test", log_mode="Test")
+        self.execute_test(data=data, features=final_features)
+        # Stage 4 --> Benchmarks
+        self.execute_benchmarks(data=data, k=len(final_features))
 
+    ##############################################################
+    # STAGE 1 - Execute algorithm on train folds ==> get K value #
+    ##############################################################
     def execute_train(self, data: dict) -> list:
-        train_results = self.execute_full_algorithm(data)
+        train_results = self.execute_algorithm(data)
         knees = find_knees(train_results)
-        K_values = list(set([knees['Interp1d']['Knee']] + [knees['Polynomial']['Knee']]))
+        # K_values = list(set([knees['Interp1d']['Knee']] + [knees['Polynomial']['Knee']]))
+        K_values = list([knees['Interp1d']['Knee']])
         self.visualization_service.plot_accuracy_to_silhouette(classification_res=train_results['Classification'],
                                                                clustering_res=train_results['Clustering'],
                                                                knees=knees,
                                                                stage='Train')
         return K_values
 
-    def execute_full_algorithm(self, data: dict) -> dict:
+    def execute_algorithm(self, data: dict) -> dict:
         clustering_results = {}
         classification_results = {}
 
         # Initialize the KFold object with k splits and shuffle the data
-        kf = KFold(n_splits=3, shuffle=True, random_state=42)
+        kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
         for i, (train_index, val_index) in enumerate(kf.split(data['Train'][0])):
             self.log_service.log('Info', f'[Executor] : ******************** Fold Number #{i + 1} ********************')
@@ -112,36 +125,115 @@ class Executor:
 
         return train_results
 
-    def execute_semi_algorithm(self, data: dict, K_values: list, mode: str, log_mode: str):
-        self.log_service.log('Info', f'[Executor] : ********************* {mode} *********************')
+    ############################################################################
+    # STAGE 2 - Execute algorithm on full train (only) on K ==> get K features #
+    ############################################################################
+    def execute_full_train(self, data: dict, K_values: list) -> np.ndarray:
+        self.log_service.log('Info', f'[Executor] : ********************* Train *********************')
 
         # Calculate the feature similarity matrix
-        F = self.feature_similarity_service.calculate_JM_matrix(X=data[f'{mode}'][0],
+        F = self.feature_similarity_service.calculate_JM_matrix(X=data['Train'][0],
                                                                 features=data['Features'],
                                                                 labels=data['Labels'])
 
         # Reduce dimensionality & Create a feature graph
         F_reduced = self.dimension_reduction_service.tsne(F=F,
-                                                          stage=log_mode,
+                                                          stage="Full Train",
                                                           fold_index=0,
                                                           perplexity=10.0)
 
         # Execute clustering service (K-Medoid + Silhouette)
         clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
-                                                                            stage=log_mode,
+                                                                            stage="Full Train",
                                                                             K_values=K_values,
                                                                             fold_index=0)
+
         # Execute classification service
         fixed_data = {
-            f'{mode}': (data[f'{mode}'][1], data[f'{mode}'][2])
+            'Train': (data['Train'][1], data['Train'][2])
         }
-        classification_res = self.classification_service.classify(mode=log_mode,
+        classification_res = self.classification_service.classify(mode="Full Train",
                                                                   data=fixed_data,
                                                                   F=F_reduced,
                                                                   clustering_res=clustering_res,
                                                                   features=list(data['Features']),
                                                                   K_values=K_values)
+
         # Create results table
         self.table_service.create_table(fold_index="0",
-                                        stage=f'{log_mode}',
+                                        stage="Full Train",
                                         classification_res=classification_res)
+
+        return clustering_res[0]['Kmedoids']['Features']
+
+    #####################################################################
+    # STAGE 3 - Execute algorithm on full test (only) on the K features #
+    #####################################################################
+    def execute_test(self, data: dict, features: np.ndarray):
+        self.log_service.log('Info', f'[Executor] : ********************* Test *********************')
+
+        # Execute classification service
+        X, y = data['Test'][1], data['Test'][2]
+        new_X = X.iloc[:, features]
+        classification_res = self.classification_service.evaluate(X=new_X,
+                                                                  y=y,
+                                                                  mode="Test",
+                                                                  K=len(features))
+        final_results = self.classification_service.arrange_results([classification_res])
+
+        # Create results table
+        self.table_service.create_table(fold_index="0",
+                                        stage="Test",
+                                        classification_res={"Test": final_results})
+
+    ################################################################
+    # STAGE 4 - Execute benchmarks algorithm on the chosen K value #
+    ################################################################
+    def execute_benchmarks(self, data: pandas.DataFrame, k: int):
+        self.log_service.log('Info', f'[Executor] : ********************* Bench Marks *********************')
+
+        y = data['Test'][2]
+        classifications_res = []
+        bench_algorithms = ["RELIEF", "FISHER-SCORE", "CFS", "MRMR", "RANDOM"]
+
+        for algo in bench_algorithms:
+            self.log_service.log('Info', f'[Executor] : Executing benchmark with [{algo}] on [{k}].')
+            new_X = Executor.select_k_best_features(k=k,
+                                                    algorithm=algo,
+                                                    X=data['Test'][1],
+                                                    y=data['Test'][2])
+            classification_res = self.classification_service.evaluate(X=new_X,
+                                                                      y=y,
+                                                                      mode="Test",
+                                                                      K=k)
+            classifications_res.append(classification_res)
+
+        final_results = self.classification_service.arrange_results(classifications_res)
+
+        # Create results table
+        self.table_service.create_table(fold_index="0",
+                                        stage="Benchmarks",
+                                        classification_res={"Test": final_results})
+
+    @staticmethod
+    def select_k_best_features(X: pandas.DataFrame, y: pandas.DataFrame, k: int, algorithm: str):
+        y = y.to_numpy().reshape(y.shape[0])
+
+        if algorithm == "RELIEF":
+            score = reliefF(X.to_numpy(), y)
+            selected_features = X.columns[score.argsort()[-k:]].tolist()
+        elif algorithm == "FISHER-SCORE":
+            score = fisher_score(X.to_numpy(), y)
+            selected_features = X.columns[score.argsort()[-k:]].tolist()
+        elif algorithm == "CFS":
+            score = cfs(X.to_numpy(), y)
+            selected_features = X.columns[score.argsort()[-k:]].tolist()
+        elif algorithm == "MRMR":
+            score = mrmr(X.to_numpy(), y, k)
+            selected_features = X.columns[score].tolist()
+        elif algorithm == "RANDOM":
+            selected_features = sample(X.columns.tolist(), k)
+        else:
+            raise ValueError("Invalid algorithm name")
+
+        return X[selected_features]

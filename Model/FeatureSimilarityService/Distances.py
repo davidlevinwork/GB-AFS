@@ -1,9 +1,5 @@
 import numpy as np
 import pandas as pd
-from skfeature.function.similarity_based.reliefF import reliefF
-from skfeature.function.similarity_based.fisher_score import fisher_score
-
-LIBRARY_METHOD = ['ReliefF', 'Fisher-Score']
 
 
 def get_distance(df: pd.DataFrame, feature: str, label1: str, label2: str) -> float:
@@ -46,30 +42,3 @@ def jm_distance(p, q):
     b = bhattacharyya_distance(p, q)
     jm = 2 * (1 - np.exp(-b))
     return jm
-
-
-def get_library_distance(metric: str, X: pd.DataFrame, Y: pd.DataFrame):
-    """Calculate the similarity distance of the given dataset X with reference tou the labels Y
-
-    Parameters
-    ----------
-    metric : str
-        The distance that measures the similarity of two probability distributions
-
-    X : pandas.DataFrame
-        Input data
-
-    Y : pandas.DataFrame
-        Input class labels
-
-    Returns
-    -------
-    {numpy array}, shape (n_features,)
-        fisher score for each feature
-    """
-    Y = Y.to_numpy().reshape(Y.shape[0])
-
-    if metric == 'ReliefF':
-        return reliefF(X.to_numpy(), Y)
-    elif metric == 'Fisher-Score':
-        return fisher_score(X.to_numpy(), Y)

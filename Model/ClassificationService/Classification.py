@@ -6,7 +6,7 @@ from sklearn import tree
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold, cross_val_score
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 NUMBER_OF_TEST_EPOCHS = 1
 NUMBER_OF_TRAIN_EPOCHS = 10
@@ -19,8 +19,7 @@ class ClassificationService:
         self.classifiers = [LogisticRegression(),
                             tree.DecisionTreeClassifier(),
                             KNeighborsClassifier(n_neighbors=5),
-                            RandomForestClassifier(),
-                            AdaBoostClassifier()]
+                            RandomForestClassifier()]
         self.cv = KFold(n_splits=10, random_state=41, shuffle=True)
 
     def classify(self, mode: str, data: dict, F: np.ndarray, clustering_res: list, features: list,
@@ -33,23 +32,16 @@ class ClassificationService:
 
             # Validation
             X, y = data['Validation'][0], data['Validation'][1]
-            test_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Test')
+            test_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Validation')
 
             results = {"Train": train_res, "Test": test_res}
 
         if mode == 'Full Train':
             # (All) Train
             X, y = data['Train'][0], data['Train'][1]
-            train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'SIGN')
+            train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Full Train')
 
-            results = {"Train": train_res, "Test": train_res}
-
-        if mode == 'Test':
-            # Test
-            X, y = data['Test'][0], data['Test'][1]
-            train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'SIGN')
-
-            results = {"Train": train_res, "Test": train_res}
+            results = {"Train": train_res}
 
         return results
 
@@ -58,7 +50,7 @@ class ClassificationService:
         start = time.time()
 
         evaluations = []
-        if mode != 'SIGN':
+        if mode == 'Train' or mode == 'Validation':
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                 # Submit a task for each K value
                 tasks = [executor.submit(self.execute_classification, X, y, F, clustering_res[K - 2], features, K, mode)

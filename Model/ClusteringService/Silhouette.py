@@ -2,10 +2,10 @@ import numpy as np
 from sklearn.metrics.pairwise import distance_metrics
 
 
-def simplified_silhouette(X, labels, centroids, mode, norm_type, regularization, eta, metric='euclidean') -> np.ndarray:
+def mean_simplified_silhouette(X, labels, centroids, mode, norm_type, regularization, eta) -> np.ndarray:
     """
-    regular = the final mean calculation includes all the values as is (#1 = #clustrers)
-    improved = the final mean calculation includes the values as is *but* we are changing 1 to 0 (like original sil)
+    regular = the final mean calculation includes the values as is *but* we are changing 1 to 0 (like original sil)
+    improved = the final mean calculation includes all the values as is (#1 = #clustrers)
     heuristic = the final mean calculation ignore the 1 values, so we will have fewer items
 
     L0 = no regularization
@@ -15,7 +15,7 @@ def simplified_silhouette(X, labels, centroids, mode, norm_type, regularization,
     [a] - for each data point, we will calculate & add the distance from itself to its centroid.
     [b] - for each data point, we will calculate the MEAN distance from itself to all other centroids.
     """
-    metric = distance_metrics()[metric]
+    metric = distance_metrics()['euclidean']
     labels_list = [*range(0, labels.shape[0], 1)]
 
     a, b = [], []
@@ -34,10 +34,10 @@ def simplified_silhouette(X, labels, centroids, mode, norm_type, regularization,
 
     if mode == 'regular':
         sil_values = (np.asarray(b) - np.asarray(a)) / np.maximum(np.asarray(a), np.asarray(b))
-        sil_values = [sil if sil != 1.0 else 0.0 for sil in sil_values]
         return np.mean(sil_values)
     if mode == 'improved':
         sil_values = (np.asarray(b) - np.asarray(a)) / np.maximum(np.asarray(a), np.asarray(b))
+        sil_values = [sil if sil != 1.0 else 0.0 for sil in sil_values]
         return np.mean(sil_values)
     if mode == 'heuristic':
         a_non_zero = [a_i for a_i in a if not a_i == 0.0]
@@ -45,11 +45,11 @@ def simplified_silhouette(X, labels, centroids, mode, norm_type, regularization,
         clean_index_list = [i for i in labels_list if i not in a_zero_indexes]
         new_b = [i for j, i in enumerate(b) if j in clean_index_list]
 
-        result = calculate_simplified_silhouette_value(a_non_zero, new_b, regularization, eta)
+        result = calculate_mean_simplified_silhouette_value(a_non_zero, new_b, regularization, eta)
         return result
 
 
-def calculate_simplified_silhouette_value(a: list, b: list, regularization: str, eta: float) -> np.ndarray:
+def calculate_mean_simplified_silhouette_value(a: list, b: list, regularization: str, eta: float) -> np.ndarray:
     """Calculate the simplified Silhouette value.
 
     Parameters

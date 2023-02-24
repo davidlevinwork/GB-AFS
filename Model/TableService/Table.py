@@ -6,22 +6,30 @@ from prettytable import PrettyTable
 class TableService:
     @staticmethod
     def create_table(fold_index: str, stage: str, classification_res: dict):
-        test_results = classification_res['Test']['Results By K']
-        train_results = classification_res['Train']['Results By K']
+        train_results = test_results = None
 
-        headers = ['K Value'] + classification_res['Train']['Results By K'][0]['Classifiers']
+        if 'Train' in classification_res:
+            train_results = classification_res['Train']['Results By K']
+            headers = ['K Value'] + classification_res['Train']['Results By K'][0]['Classifiers']
+        if 'Test' in classification_res:
+            test_results = classification_res['Test']['Results By K']
+            headers = ['K Value'] + classification_res['Test']['Results By K'][0]['Classifiers']
+
         seperator = ['*'] * len(headers)
         table = PrettyTable([header for header in headers])
 
-        for train_result in train_results:
-            row = [train_result['K']] + list(train_result['Mean'].values())
-            table.add_row([col for col in row])
+        if train_results is not None:
+            for train_result in train_results:
+                row = [train_result['K']] + list(train_result['Mean'].values())
+                table.add_row([col for col in row])
 
-        table.add_row([sep for sep in seperator])
+        if train_results is not None and test_results is not None:
+            table.add_row([sep for sep in seperator])
 
-        for test_result in test_results:
-            row = [test_result['K']] + list(test_result['Mean'].values())
-            table.add_row([col for col in row])
+        if test_results is not None:
+            for test_result in test_results:
+                row = [test_result['K']] + list(test_result['Mean'].values())
+                table.add_row([col for col in row])
 
         TableService.save_table(fold_index, stage, table)
 
@@ -35,6 +43,9 @@ class TableService:
             if stage == "Train":
                 table_file = os.path.join(latest_plot_dir, stage, f'Fold #{fold_index}', 'Results.txt')
             else:
+                dir = os.path.join(latest_plot_dir, stage)
+                if not os.path.isdir(dir):
+                    os.makedirs(dir)
                 table_file = os.path.join(latest_plot_dir, stage, 'Results.txt')
 
             with open(table_file, 'w') as w:

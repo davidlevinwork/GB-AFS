@@ -114,7 +114,7 @@ def find_knees(train_results: dict) -> dict:
          Clustering results
      """
     x = [res['K'] for res in train_results['Clustering']]
-    y = [res['Silhouette']['Mean Simplified Silhouette'] for res in train_results['Clustering']]
+    y = [res['Silhouette']['M.S. Silhouette'] for res in train_results['Clustering']]
 
     kn = KneeLocator(
         x,
@@ -147,6 +147,6 @@ def find_knees(train_results: dict) -> dict:
     }
 
     return {
-        'Interp1d': kn_res,
-        'Polynomial': kn_poly_res
+        'Interp1d': kn_res
+        # 'Polynomial': kn_poly_res
     }
