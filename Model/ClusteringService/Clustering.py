@@ -4,7 +4,7 @@ from array import array
 import concurrent.futures
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
-from Model.ClusteringService.Silhouette import mean_simplified_silhouette
+from Model.ClusteringService.Silhouette import simplified_silhouette
 
 
 class ClusteringService:
@@ -128,20 +128,20 @@ class ClusteringService:
         """
         silhouette_results = {}
         silhouette_results['Silhouette'] = silhouette_score(X=X, labels=y)
-        silhouette_results['S. Silhouette'] = mean_simplified_silhouette(X=X,
-                                                                         labels=y,
-                                                                         centroids=centroids,
-                                                                         mode='regular',
-                                                                         norm_type='min',
-                                                                         regularization='L0',
-                                                                         eta=1.0)
-        silhouette_results['M.S. Silhouette'] = mean_simplified_silhouette(X=X,
-                                                                           labels=y,
-                                                                           centroids=centroids,
-                                                                           mode='heuristic',
-                                                                           norm_type='mean',
-                                                                           regularization='L0',
-                                                                           eta=1.0)
+        silhouette_results['S. Silhouette'] = simplified_silhouette(X=X,
+                                                                    labels=y,
+                                                                    centroids=centroids,
+                                                                    mode='regular',
+                                                                    norm_type='min',
+                                                                    regularization='L0',
+                                                                    eta=1.0)
+        silhouette_results['M.S. Silhouette'] = simplified_silhouette(X=X,
+                                                                      labels=y,
+                                                                      centroids=centroids,
+                                                                      mode='heuristic',
+                                                                      norm_type='mean',
+                                                                      regularization='L0',
+                                                                      eta=1.0)
         return silhouette_results
 
     def arrange_results(self, results: list) -> list:
