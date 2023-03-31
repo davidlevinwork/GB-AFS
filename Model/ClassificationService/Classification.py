@@ -21,7 +21,7 @@ class ClassificationService:
                             tree.DecisionTreeClassifier(),
                             KNeighborsClassifier(n_neighbors=5),
                             RandomForestClassifier()]
-        self.cv = KFold(n_splits=10, random_state=41, shuffle=True)
+        self.cv = KFold(n_splits=10, shuffle=True)
 
     def classify(self, mode: str, data: dict, F: np.ndarray, clustering_res: list, features: list,
                  K_values: list) -> dict:

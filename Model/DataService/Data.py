@@ -85,7 +85,7 @@ class DataService:
         return X
 
     @staticmethod
-    def train_test_split(df: pd.DataFrame, test_size: float = 0.25, random_state: int = 42) -> tuple:
+    def train_test_split(df: pd.DataFrame, test_size: float = 0.25) -> tuple:
         """Split data into train and test sets
 
          Parameters
@@ -94,15 +94,13 @@ class DataService:
              Data frame of the data set
          test_size : float, optional
              Test set size, by default 0.25
-         random_state : int, optional
-             Random seed for data shuffling, by default 42
 
          Returns
          -------
          tuple
              Train and test data as two separate tuples.
          """
-        train, test = train_test_split(df, test_size=test_size, random_state=random_state)
+        train, test = train_test_split(df, test_size=test_size)
 
         X_train = train.drop('class', axis=1)
         y_train = pd.DataFrame(train['class'])
