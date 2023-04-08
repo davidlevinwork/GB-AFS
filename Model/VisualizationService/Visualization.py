@@ -37,7 +37,7 @@ class VisualizationService:
             plt.figure(figsize=(10, 8))
 
             c = data[:, 0] + data[:, 1]
-            plt.scatter(x=data[:, 0], y=data[:, 1], marker='o', c=c, cmap='viridis')
+            plt.scatter(x=data[:, 0], y=data[:, 1], marker='o', c=c, cmap='Wistia')
 
             plt.xlabel(r'$\lambda_1\psi_1$')
             plt.ylabel(r'$\lambda_2\psi_2$')
@@ -99,7 +99,7 @@ class VisualizationService:
                 for label in u_labels:
                     plt.scatter(F[labels == label, 0], F[labels == label, 1])
 
-                plt.scatter(centroids[:, 0], centroids[:, 1], marker='o', color='black', facecolors='none')
+                plt.scatter(centroids[:, 0], centroids[:, 1], marker='o', color='black', facecolors='none', linewidth=2)
 
                 # Plot labels
                 plt.xlabel(r'$\lambda_1\psi_1$')
@@ -130,14 +130,11 @@ class VisualizationService:
 
                 K = clustering_result['K']
                 centroids = clustering_result['Kmedoids']['Centroids']
-                plt.scatter(F[:, 0], F[:, 1], c=c, cmap='viridis')
-                plt.scatter(centroids[:, 0], centroids[:, 1], marker='x', color='red', s=30)
+                plt.scatter(F[:, 0], F[:, 1], c=c, cmap='Wistia')
+                plt.scatter(centroids[:, 0], centroids[:, 1], marker='o', color='black', facecolors='none', linewidth=1.25, label="Ours")
 
-                # Plot labels
-                plt.colorbar()
                 plt.xlabel(r'$\lambda_1\psi_1$')
                 plt.ylabel(r'$\lambda_2\psi_2$')
-                plt.title(f'Clustering Result [K={K}]')
 
                 # Show only the bottom and left ticks
                 ax.xaxis.set_ticks_position('bottom')
@@ -147,6 +144,7 @@ class VisualizationService:
                 ax.spines['top'].set_visible(False)
                 ax.spines['right'].set_visible(False)
 
+                plt.legend()
                 plt.tight_layout()
                 self.save_plot(plt, stage, 'U-Clustering', f'{fold_index}', f'Clustering for K={K}')
                 plt.close()
