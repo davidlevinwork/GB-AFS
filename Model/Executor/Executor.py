@@ -43,7 +43,7 @@ class Executor:
 
     def execute(self):
         # Prepare the data
-        data = self.data_service.execute_data_service(data_set='Microsoft_Malware_Sample')
+        data = self.data_service.execute_data_service(data_set='Cardiotocography')
         # STAGE 1 --> Train stage
         K_values = self.execute_train(data=data)
         # STAGE 2 --> Full train stage
