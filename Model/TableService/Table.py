@@ -8,7 +8,7 @@ class TableService:
     def create_table(fold_index: str, stage: str, classification_res: dict):
         train_results = test_results = None
 
-        metrics = ['F1', 'Recall', 'Accuracy', 'Precision', 'Specificity']
+        metrics = ['F1', 'AUC-ovo', 'Accuracy', 'AUC-ovr']
 
         for metric in metrics:
             if 'Train' in classification_res:

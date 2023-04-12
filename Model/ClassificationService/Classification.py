@@ -4,10 +4,10 @@ import pandas as pd
 import concurrent.futures
 from sklearn import tree
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 NUMBER_OF_TEST_EPOCHS = 1
 NUMBER_OF_TRAIN_EPOCHS = 10
@@ -17,8 +17,7 @@ class ClassificationService:
     def __init__(self, log_service, visualization_service):
         self.log_service = log_service
         self.visualization_service = visualization_service
-        self.classifiers = [LogisticRegression(),
-                            tree.DecisionTreeClassifier(),
+        self.classifiers = [tree.DecisionTreeClassifier(),
                             KNeighborsClassifier(n_neighbors=5),
                             RandomForestClassifier()]
         self.cv = KFold(n_splits=10, shuffle=True)
@@ -96,48 +95,44 @@ class ClassificationService:
     def evaluate(self, X: pd.DataFrame, y: pd.DataFrame, K: int, mode: str) -> dict:
         classifiers_str = []
         classifier_to_accuracy = {}
-        classifier_to_recall = {}
-        classifier_to_precision = {}
         classifier_to_f1 = {}
-        classifier_to_specificity = {}
+        classifier_to_auc_ovo = {}
+        classifier_to_auc_ovr = {}
 
+        lb = LabelBinarizer()
+        y_binary = lb.fit_transform(y)  # Convert true labels to binary format
         for classifier in self.classifiers:
-            accuracy_list, recall_list, precision_list, f1_list, specificity_list = [], [], [], [], []
+            accuracy_list, f1_list, auc_ovo_list, auc_ovr_list = [], [], [], []
             classifier_str = str(classifier).replace('(', '').replace(')', '')
             classifiers_str.append(classifier_str)
 
             epochs = NUMBER_OF_TRAIN_EPOCHS if mode == 'Train' else NUMBER_OF_TEST_EPOCHS
             for _ in range(epochs):
                 cv_predictions = cross_val_predict(classifier, X, np.ravel(y), cv=self.cv)
+                cv_predictions_proba = cross_val_predict(classifier, X, np.ravel(y), cv=self.cv, method='predict_proba')
                 accuracy = accuracy_score(y, cv_predictions)
                 f1 = f1_score(y, cv_predictions, average='weighted')
-                recall = recall_score(y, cv_predictions, average='weighted')
-                precision = precision_score(y, cv_predictions, average='weighted')
-
-                conf_mat = confusion_matrix(y, cv_predictions)
-                specificity = np.mean([conf_mat[i, i] / np.sum(conf_mat[i, :]) for i in range(conf_mat.shape[0])])
+                auc_ovo = roc_auc_score(y_binary, cv_predictions_proba, multi_class='ovo', average='weighted')
+                auc_ovr = roc_auc_score(y_binary, cv_predictions_proba, multi_class='ovr', average='weighted')
 
                 f1_list.append(f1)
-                recall_list.append(recall)
                 accuracy_list.append(accuracy)
-                precision_list.append(precision)
-                specificity_list.append(specificity)
+                auc_ovo_list.append(auc_ovo)
+                auc_ovr_list.append(auc_ovr)
 
             classifier_to_f1[classifier_str] = np.mean(f1_list)
-            classifier_to_recall[classifier_str] = np.mean(recall_list)
             classifier_to_accuracy[classifier_str] = np.mean(accuracy_list)
-            classifier_to_precision[classifier_str] = np.mean(precision_list)
-            classifier_to_specificity[classifier_str] = np.mean(specificity_list)
+            classifier_to_auc_ovo[classifier_str] = np.mean(auc_ovo_list)
+            classifier_to_auc_ovr[classifier_str] = np.mean(auc_ovr_list)
 
         return {
             'K': K,
             'Mode': mode,
             'Classifiers': classifiers_str,
             'F1': classifier_to_f1,
-            'Recall': classifier_to_recall,
+            'AUC-ovo': classifier_to_auc_ovo,
             'Accuracy': classifier_to_accuracy,
-            'Precision': classifier_to_precision,
-            'Specificity': classifier_to_specificity
+            'AUC-ovr': classifier_to_auc_ovr
         }
 
     def arrange_results(self, results: list) -> dict:
@@ -147,10 +142,9 @@ class ClassificationService:
            'Results By K': sorted(results, key=lambda x: x['K']),
            'Results By Classifiers': self.arrange_results_by_classifier(b_results),
            'Results By F1': sorted(results, key=lambda x: sum(x['F1'].values()) / len(x['F1']), reverse=True),
-           'Results By Recall': sorted(results, key=lambda x: sum(x['Recall'].values()) / len(x['Recall']), reverse=True),
-           'Results By Accuracy': sorted(results, key=lambda x: sum(x['Accuracy'].values()) / len(x['Accuracy']), reverse=True),
-           'Results By Precision': sorted(results, key=lambda x: sum(x['Precision'].values()) / len(x['Precision']), reverse=True),
-           'Results By Specificity': sorted(results, key=lambda x: sum(x['Specificity'].values()) / len(x['Specificity']), reverse=True),
+           'Results By AUC-ovo': sorted(results, key=lambda x: sum(x['AUC-ovo'].values()) / len(x['AUC-ovo']), reverse=True),
+           'Results By AUC-ovr': sorted(results, key=lambda x: sum(x['AUC-ovr'].values()) / len(x['AUC-ovr']), reverse=True),
+           'Results By Accuracy': sorted(results, key=lambda x: sum(x['Accuracy'].values()) / len(x['Accuracy']), reverse=True)
         }
         return new_results
 

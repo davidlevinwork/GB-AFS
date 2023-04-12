@@ -206,8 +206,6 @@ class VisualizationService:
 
     @staticmethod
     def get_classifier_label(classifier):
-        if classifier == "LogisticRegression":
-            return "Log. Reg."
         if classifier == "DecisionTreeClassifier":
             return "Dec. Tree"
         if classifier == "KNeighborsClassifier":
