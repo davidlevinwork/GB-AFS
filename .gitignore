@@ -1,4 +1,4 @@
 /.idea/
-
+/venv/
 # Remove this line if you want to save all the plots
 /Model/Files/
