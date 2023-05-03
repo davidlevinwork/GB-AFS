@@ -3,17 +3,16 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
+from Model.LogService.Log import log_service
 
 dt = datetime.now()
 time_stamp = datetime.timestamp(dt)
+cmap = plt.get_cmap('nipy_spectral')
 
 
 class VisualizationService:
-    def __init__(self, log_service):
-        self.log_service = log_service
-        self.cmap = plt.get_cmap('nipy_spectral')
-
-    def save_plot(self, file: plt, stage: str, header: str, fold_index: str,  title: str):
+    @staticmethod
+    def save_plot(file: plt, stage: str, header: str, fold_index: str, title: str):
         try:
             current_dir = os.path.dirname(__file__)
             if stage == 'Train':
@@ -29,7 +28,7 @@ class VisualizationService:
 
             file.savefig(os.path.join(results_dir, title))
         except AssertionError as ex:
-            self.log_service.log('Error', f'[Visualization Service] - Failed to save plot as a file. Error: [{ex}]')
+            log_service.log('Error', f'[Visualization Service] - Failed to save plot as a file. Error: [{ex}]')
 
     def plot_tsne(self, data: np.ndarray, stage: str, fold_index: int):
         try:
@@ -46,7 +45,7 @@ class VisualizationService:
 
             self.save_plot(plt, stage, 'Dimensionality Reduction', f'{fold_index}', 't-SNE')
         except AssertionError as ex:
-            self.log_service.log('Error', f'[Visualization Service] - Failed to plot t-SNE graph. Error: [{ex}]')
+            log_service.log('Error', f'[Visualization Service] - Failed to plot t-SNE graph. Error: [{ex}]')
 
     def plot_silhouette(self, clustering_results: list, stage: str, fold_index: int):
         try:
@@ -84,7 +83,7 @@ class VisualizationService:
             plt.tight_layout()
             self.save_plot(plt, stage, 'Silhouette', f'{fold_index}', 'Silhouette Graph')
         except AssertionError as ex:
-            self.log_service.log('Error', f'[Visualization Service] - Failed to plot silhouette graph. Error: [{ex}]')
+            log_service.log('Error', f'[Visualization Service] - Failed to plot silhouette graph. Error: [{ex}]')
 
     def plot_clustering(self, F: pd.DataFrame, clustering_results: list, stage: str, fold_index: int):
         try:
@@ -119,7 +118,7 @@ class VisualizationService:
                 plt.close()
 
         except AssertionError as ex:
-            self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
+            log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
 
     def plot_upgrade_clustering(self, F: pd.DataFrame, clustering_results: list, stage: str, fold_index: int):
         try:
@@ -131,7 +130,8 @@ class VisualizationService:
                 K = clustering_result['K']
                 centroids = clustering_result['Kmedoids']['Centroids']
                 plt.scatter(F[:, 0], F[:, 1], c=c, cmap='Wistia')
-                plt.scatter(centroids[:, 0], centroids[:, 1], marker='o', color='black', facecolors='none', linewidth=1.25, label="Ours")
+                plt.scatter(centroids[:, 0], centroids[:, 1], marker='o', color='black', facecolors='none',
+                            linewidth=1.25, label="Ours")
 
                 plt.xlabel(r'$\lambda_1\psi_1$')
                 plt.ylabel(r'$\lambda_2\psi_2$')
@@ -150,7 +150,7 @@ class VisualizationService:
                 plt.close()
 
         except AssertionError as ex:
-            self.log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
+            log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
 
     def plot_accuracy_to_silhouette(self, classification_res: dict, clustering_res: list, knees: dict, stage: str):
         try:
@@ -159,8 +159,8 @@ class VisualizationService:
 
             # Get the colors from the color map
             c_index = 0
-            colors = [self.cmap(i) for i in np.linspace(0, 1, len(classification_res) + len(knees) +
-                                                        len(clustering_res[0]['Silhouette']))]
+            colors = [cmap(i) for i in np.linspace(0, 1, len(classification_res) + len(knees) +
+                                                   len(clustering_res[0]['Silhouette']))]
 
             # Left Y axis (accuracy)
             for classifier, classifier_val in classification_res.items():
@@ -202,7 +202,7 @@ class VisualizationService:
 
             self.save_plot(plt, stage, 'Accuracy', 'Final', 'Accuracy-Silhouette')
         except AssertionError as ex:
-            self.log_service.log('Error', f'[Visualization Service] - Failed to plot accuracy graph. Error: [{ex}]')
+            log_service.log('Error', f'[Visualization Service] - Failed to plot accuracy graph. Error: [{ex}]')
 
     @staticmethod
     def get_classifier_label(classifier):
@@ -213,3 +213,5 @@ class VisualizationService:
         if classifier == "RandomForestClassifier":
             return "Ran. Forest"
 
+
+visualization_service = VisualizationService()

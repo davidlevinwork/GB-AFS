@@ -6,11 +6,13 @@ from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
 from Model.ClusteringService.Silhouette import simplified_silhouette
 
+from Model.LogService.Log import log_service
+from Model.VisualizationService.Visualization import visualization_service
+
 
 class ClusteringService:
-    def __init__(self, log_service, visualization_service):
-        self.log_service = log_service
-        self.visualization_service = visualization_service
+    def __init__(self):
+        pass
 
     def execute_clustering_service(self, F: pd.DataFrame, K_values: list, stage: str, fold_index: int) -> list:
         """Get all the possible combinations of the given labels
@@ -46,12 +48,12 @@ class ClusteringService:
                 results.append(task.result())
 
         results = self.arrange_results(results)
-        self.visualization_service.plot_silhouette(results, stage, fold_index)
-        self.visualization_service.plot_clustering(F, results, stage, fold_index)
-        self.visualization_service.plot_upgrade_clustering(F, results, stage, fold_index)
+        visualization_service.plot_silhouette(results, stage, fold_index)
+        visualization_service.plot_clustering(F, results, stage, fold_index)
+        visualization_service.plot_upgrade_clustering(F, results, stage, fold_index)
 
         end = time.time()
-        self.log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end - start, 3)}]')
+        log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end - start, 3)}]')
         return results
 
     @staticmethod
@@ -163,6 +165,6 @@ class ClusteringService:
             sil_log_str = ''
             for sil_name, sil_value in result['Silhouette'].items():
                 sil_log_str += f'({sil_name}) - ({"%.4f" % sil_value}), '
-            self.log_service.log('Info', f'[Clustering Service] : Silhouette values for (K={k}) * {sil_log_str[:-2]}')
+            log_service.log('Info', f'[Clustering Service] : Silhouette values for (K={k}) * {sil_log_str[:-2]}')
 
         return sorted_results

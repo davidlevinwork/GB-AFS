@@ -9,14 +9,14 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
+from Model.LogService.Log import log_service
+
 NUMBER_OF_TEST_EPOCHS = 1
 NUMBER_OF_TRAIN_EPOCHS = 10
 
 
 class ClassificationService:
-    def __init__(self, log_service, visualization_service):
-        self.log_service = log_service
-        self.visualization_service = visualization_service
+    def __init__(self):
         self.classifiers = [tree.DecisionTreeClassifier(),
                             KNeighborsClassifier(n_neighbors=5),
                             RandomForestClassifier()]
@@ -51,7 +51,7 @@ class ClassificationService:
 
         evaluations = []
         if mode == 'Train' or mode == 'Validation':
-            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 # Submit a task for each K value
                 tasks = [executor.submit(self.execute_classification, X, y, F, clustering_res[K - 2], features, K, mode)
                          for K in K_values]
@@ -69,8 +69,8 @@ class ClassificationService:
         evaluations = self.arrange_results(evaluations)
 
         end = time.time()
-        self.log_service.log('Debug', f'[Classification Service] - [{mode}]: Total run time in seconds:'
-                                      f' [{round(end - start, 3)}]')
+        log_service.log('Debug', f'[Classification Service] - [{mode}]: Total run time in seconds:'
+                                 f' [{round(end - start, 3)}]')
 
         return evaluations
 
@@ -79,8 +79,8 @@ class ClassificationService:
         new_X = self.prepare_data(X, F, results['Kmedoids']['Centroids'], features)
         evaluation = self.evaluate(new_X, y, K, mode)
 
-        self.log_service.log('Debug', f'[Classification Service] - Finished to execute classification for {K} '
-                                      f'in mode {mode}.')
+        log_service.log('Debug', f'[Classification Service] - Finished to execute classification for {K} '
+                                 f'in mode {mode}.')
 
         return evaluation
 
@@ -139,12 +139,15 @@ class ClassificationService:
         b_results = results
 
         new_results = {
-           'Results By K': sorted(results, key=lambda x: x['K']),
-           'Results By Classifiers': self.arrange_results_by_classifier(b_results),
-           'Results By F1': sorted(results, key=lambda x: sum(x['F1'].values()) / len(x['F1']), reverse=True),
-           'Results By AUC-ovo': sorted(results, key=lambda x: sum(x['AUC-ovo'].values()) / len(x['AUC-ovo']), reverse=True),
-           'Results By AUC-ovr': sorted(results, key=lambda x: sum(x['AUC-ovr'].values()) / len(x['AUC-ovr']), reverse=True),
-           'Results By Accuracy': sorted(results, key=lambda x: sum(x['Accuracy'].values()) / len(x['Accuracy']), reverse=True)
+            'Results By K': sorted(results, key=lambda x: x['K']),
+            'Results By Classifiers': self.arrange_results_by_classifier(b_results),
+            'Results By F1': sorted(results, key=lambda x: sum(x['F1'].values()) / len(x['F1']), reverse=True),
+            'Results By AUC-ovo': sorted(results, key=lambda x: sum(x['AUC-ovo'].values()) / len(x['AUC-ovo']),
+                                         reverse=True),
+            'Results By AUC-ovr': sorted(results, key=lambda x: sum(x['AUC-ovr'].values()) / len(x['AUC-ovr']),
+                                         reverse=True),
+            'Results By Accuracy': sorted(results, key=lambda x: sum(x['Accuracy'].values()) / len(x['Accuracy']),
+                                          reverse=True)
         }
         return new_results
 

@@ -1,15 +1,13 @@
 import time
-
 import pandas as pd
 from sklearn.manifold import TSNE
+from Model.LogService.Log import log_service
+from Model.VisualizationService.Visualization import visualization_service
 
 
 class DimensionReductionService:
-    def __init__(self, log_service, visualization_service):
-        self.log_service = log_service
-        self.visualization_service = visualization_service
-
-    def tsne(self, F: pd.DataFrame, stage: str, fold_index: int, n_components: int = 2, perplexity: int = 30,
+    @staticmethod
+    def tsne(F: pd.DataFrame, stage: str, fold_index: int, n_components: int = 2, perplexity: int = 30,
              n_iter: int = 1000) -> pd.DataFrame:
         """Execute dimensionality reduction (using the TSNE algorithm)
 
@@ -37,11 +35,11 @@ class DimensionReductionService:
         tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter)
         F_reduced = tsne.fit_transform(F)
 
-        self.visualization_service.plot_tsne(F_reduced, stage, fold_index)
+        visualization_service.plot_tsne(F_reduced, stage, fold_index)
 
         end = time.time()
-        self.log_service.log('Info', f'[Dimension Reduction Service] : Number of components: ({n_components}) * '
-                                     f'Perplexity: ({perplexity}) * Number of iterations: ({n_iter})')
-        self.log_service.log('Debug', f'[Dimension Reduction Service] : Total run time in seconds: '
-                                      f'[{round(end-start, 3)}]')
+        log_service.log('Info', f'[Dimension Reduction Service] : Number of components: ({n_components}) * '
+                                f'Perplexity: ({perplexity}) * Number of iterations: ({n_iter})')
+        log_service.log('Debug', f'[Dimension Reduction Service] : Total run time in seconds: '
+                                 f'[{round(end - start, 3)}]')
         return F_reduced

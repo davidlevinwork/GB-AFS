@@ -3,14 +3,12 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+from Model.LogService.Log import log_service
 
 
 class DataService:
-    def __init__(self, log_service, visualization_service):
-        self.log_service = log_service
-        self.visualization_service = visualization_service
-
-    def execute_data_service(self, data_set: str) -> dict:
+    @staticmethod
+    def execute_data_service(data_set: str) -> dict:
         """Main function of data service.
 
         Parameters
@@ -38,9 +36,9 @@ class DataService:
         results['Labels'] = DataService.get_labels(results['Train'][2])
 
         end = time.time()
-        self.log_service.log('Info', f'[Data Service] : Data set name: ({data_set}.csv) * Number of features: '
-                                     f'({len(results["Features"])}) * Number of labels: ({len(results["Labels"])})')
-        self.log_service.log('Debug', f'[Data Service] : Total run time in seconds: [{round(end-start, 3)}]')
+        log_service.log('Info', f'[Data Service] : Data set name: ({data_set}.csv) * Number of features: '
+                                f'({len(results["Features"])}) * Number of labels: ({len(results["Labels"])})')
+        log_service.log('Debug', f'[Data Service] : Total run time in seconds: [{round(end - start, 3)}]')
         return results
 
     @staticmethod

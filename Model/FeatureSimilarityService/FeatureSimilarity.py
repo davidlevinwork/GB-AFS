@@ -4,13 +4,12 @@ import numpy as np
 import pandas as pd
 from Model.FeatureSimilarityService.Distances import get_distance
 
+from Model.LogService.Log import log_service
+
 
 class FeatureSimilarityService:
-    def __init__(self, log_service, visualization_service):
-        self.log_service = log_service
-        self.visualization_service = visualization_service
-
-    def calculate_JM_matrix(self, X: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame) -> np.ndarray:
+    @staticmethod
+    def calculate_JM_matrix(X: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame) -> np.ndarray:
         """Calculate the JM matrix
 
         Parameters
@@ -31,15 +30,15 @@ class FeatureSimilarityService:
         label_combinations = FeatureSimilarityService.get_label_combinations(labels)
         separation_matrix = FeatureSimilarityService.init_JM_matrix(features, labels)
 
-        for i, feature in enumerate(features):                                      # Iterate over the features
-            for j, labels in enumerate(label_combinations):                         # Iterate over each pairs of classes
+        for i, feature in enumerate(features):  # Iterate over the features
+            for j, labels in enumerate(label_combinations):  # Iterate over each pairs of classes
                 separation_matrix[i][j] = get_distance(X, feature, labels[0], labels[1])
-            self.log_service.log('Info', f'[Feature Similarity Service] : Finish to compute separation value of '
-                                         f'feature ({feature}), index ({i + 1})')
+            log_service.log('Info', f'[Feature Similarity Service] : Finish to compute separation value of '
+                                    f'feature ({feature}), index ({i + 1})')
 
         end = time.time()
-        self.log_service.log('Debug', f'[Feature Similarity Service] : Total run time in seconds: '
-                                      f'[{round(end-start, 3)}]')
+        log_service.log('Debug', f'[Feature Similarity Service] : Total run time in seconds: '
+                                 f'[{round(end - start, 3)}]')
         return separation_matrix
 
     @staticmethod
