@@ -1,0 +1,23 @@
+# Determines the run mode for the algorithm
+#   Options:
+#     1. basic: Runs the GB-AFS model only
+#     2. full: Runs the GB-AFS model in proof of concept configuration
+mode: basic
+
+dataset:
+  dataset_path: na
+  train_test_split: 75-25
+  # The name of the column containing the data labels
+  label_column_str: class
+
+k_fold:
+  n_splits: 5
+  shuffle: True
+
+t_sne:
+  n_iter: 1000
+  perplexity: 30
+  n_components: 2
+
+k_medoids:
+  method: pam
