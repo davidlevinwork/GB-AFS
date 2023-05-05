@@ -1,4 +1,4 @@
-# GB-AFS
+# GB-AFS: Graph-Based Automatic Feature Selection for Multi-Class Classification via Mean Simplified Silhouette
 Official implementation of the Graph-Based Automatic Feature Selection (GB-AFS) model, a novel filter-based feature selection method for multi-class classification tasks. GB-AFS automatically determines the minimum combination of features required to sustain prediction performance while maintaining complementary discriminating abilities between different classes, without the need for user-defined parameters.
 
 ![](Resources/GB-AFS.png)
