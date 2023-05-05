@@ -2,6 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 from array import array
+from config import config
 import concurrent.futures
 from sklearn_extra.cluster import KMedoids
 from Model.LogService.Log import log_service
@@ -68,7 +69,7 @@ class ClusteringService:
         return results
 
     @staticmethod
-    def run_kmedoids(F: pd.DataFrame, K: int, method: str = 'pam', init: str = 'k-medoids++') -> dict:
+    def run_kmedoids(F: pd.DataFrame, K: int, init: str = 'k-medoids++') -> dict:
         """
         This function performs K-medoids clustering on the given feature matrix and K value. It also accepts optional
          arguments for the method and initialization of medoids.
@@ -76,15 +77,15 @@ class ClusteringService:
         Args:
             F (pd.DataFrame): The reduced feature similarity matrix.
             K (int): The number of clusters.
-            method (str, optional): The algorithm to use ('alternate' is faster, while 'pam' is more accurate).
-            Defaults to 'pam'.
             init (str, optional): The medoid initialization method ('random', 'heuristic', 'k-medoids++', 'build').
                                   Defaults to 'k-medoids++'.
 
         Returns:
             dict: A dictionary containing cluster labels and centroids.
         """
-        kmedoids = KMedoids(n_clusters=K, method=method, init=init).fit(F)
+        kmedoids = KMedoids(init=init,
+                            n_clusters=K,
+                            method=config.k_medoids.method).fit(F)
         results = {
             'Labels': kmedoids.labels_,
             'Features': kmedoids.medoid_indices_,

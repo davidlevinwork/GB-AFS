@@ -23,14 +23,14 @@ class Executor:
 
     def run(self):
         # Prepare the data
-        data = self.data_service.run(data_set='Cardiotocography')
+        data = self.data_service.run()
         # STAGE 1 --> Train stage
         K_values = self.first_phase(data=data)
         # STAGE 2 --> Full train stage
         final_features = self.second_phase(data=data, K_values=K_values)
         # STAGE 3 --> Test stage
         self.execute_test(data=data, features=final_features)
-        # Stage 4 --> Benchmarks
+        # STAGE 4 --> Benchmarks
         self.execute_benchmarks(data=data, k=len(final_features))
 
     ##############################################################
@@ -56,8 +56,7 @@ class Executor:
         # Reduce dimensionality & Create a feature graph
         F_reduced = self.dimension_reduction_service.tsne(F=F,
                                                           stage=stage,
-                                                          fold_index=fold_index,
-                                                          perplexity=10.0)
+                                                          fold_index=fold_index)
 
         # Execute clustering service (K-Medoid + Silhouette)
         clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
@@ -97,7 +96,9 @@ class Executor:
         classification_results = {}
 
         # Initialize the KFold object with k splits and shuffle the data
-        kf = KFold(n_splits=2, shuffle=True, random_state=42)
+        kf = KFold(n_splits=config.k_fold.n_splits,
+                   shuffle=config.k_fold.shuffle,
+                   random_state=42)
 
         for i, (train_index, val_index) in enumerate(kf.split(data['Train'][0])):
             log_service.log('Info', f'[Executor] : ******************** Fold Number #{i + 1} ********************')

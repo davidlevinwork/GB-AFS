@@ -5,7 +5,7 @@
 mode: basic
 
 dataset:
-  dataset_path: na
+  dataset_path: .\Cardiotocography
   train_test_split: 75-25
   # The name of the column containing the data labels
   label_column_str: class
@@ -16,7 +16,8 @@ k_fold:
 
 t_sne:
   n_iter: 1000
-  perplexity: 30
+  # The perplexity value must be LOWER than the number of the features in the given data set
+  perplexity: 10.0
   n_components: 2
 
 k_medoids:
