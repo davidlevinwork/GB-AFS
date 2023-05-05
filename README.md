@@ -10,7 +10,7 @@ This paper introduces a novel graph-based filter method for automatic feature se
 Install the repo:
 
 ```bash
-git clone https://github.com/yourusername/GB-AFS.git
+git clone https://github.com/davidlevinwork/GB-AFS.git
 cd GB-AFS
 pip install -r requirements.txt
 python3 main.py
