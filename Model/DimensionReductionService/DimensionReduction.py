@@ -1,4 +1,5 @@
 import time
+import numpy as np
 import pandas as pd
 from sklearn.manifold import TSNE
 from Model.LogService.Log import log_service
@@ -7,8 +8,8 @@ from Model.VisualizationService.Visualization import visualization_service
 
 class DimensionReductionService:
     @staticmethod
-    def tsne(F: pd.DataFrame, stage: str, fold_index: int, n_components: int = 2, perplexity: int = 30,
-             n_iter: int = 1000) -> pd.DataFrame:
+    def tsne(F: np.ndarray, stage: str, fold_index: int, n_components: int = 2, perplexity: float = 30.0,
+             n_iter: int = 1000) -> np.ndarray:
         """Execute dimensionality reduction (using the TSNE algorithm)
 
         Parameters
@@ -21,8 +22,8 @@ class DimensionReductionService:
             Index of the given k-fold (for saving results & plots)
         n_components : int, optional
             Number of components parameter for TSNE, by default 2
-        perplexity : int, optional
-            Perplexity parameter for TSNE, by default 30
+        perplexity : float, optional
+            Perplexity parameter for TSNE, by default 30.0
         n_iter : int, optional
             Number of iterations for TSNE, by default 1000
 
