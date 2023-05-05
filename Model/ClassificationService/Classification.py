@@ -1,15 +1,15 @@
 import time
 import numpy as np
 import pandas as pd
-import concurrent.futures
 from sklearn import tree
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import KFold, cross_val_predict
-from sklearn.ensemble import RandomForestClassifier
+import concurrent.futures
+from Model.LogService.Log import log_service
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
-from Model.LogService.Log import log_service
 
 NUMBER_OF_TEST_EPOCHS = 1
 NUMBER_OF_TRAIN_EPOCHS = 10
@@ -24,7 +24,24 @@ class ClassificationService:
 
     def classify(self, mode: str, data: dict, F: np.ndarray, clustering_res: list, features: list,
                  K_values: list) -> dict:
+        """
+        This function trains and validates the classification models using the provided data, feature matrix,
+        clustering results, features, and K values. The function supports two modes: 'Train' and 'Full Train'.
 
+        Args:
+            mode (str): The mode of the classification service, either 'Train' or 'Full Train'.
+            data (dict): A dictionary containing the training and validation data (if mode is 'Train') or only the
+                         training data (if mode is 'Full Train').
+            F (np.ndarray): The feature matrix.
+            clustering_res (list): A list of clustering results.
+            features (list): A list of feature names.
+            K_values (list): A list of K values for K-medoids clustering.
+
+        Returns:
+            dict: A dictionary containing the classification results for the training and validation data (if mode
+                  is 'Train') or only the training data (if mode is 'Full Train').
+
+        """
         if mode == 'Train':
             # Train
             X, y = data['Train'][0], data['Train'][1]
@@ -36,7 +53,7 @@ class ClassificationService:
 
             results = {"Train": train_res, "Test": test_res}
 
-        if mode == 'Full Train':
+        elif mode == 'Full Train':
             # (All) Train
             X, y = data['Train'][0], data['Train'][1]
             train_res = self.execute_classification_service(X, y, F, clustering_res, features, K_values, 'Full Train')
@@ -47,6 +64,22 @@ class ClassificationService:
 
     def execute_classification_service(self, X: pd.DataFrame, y: pd.DataFrame, F: np.ndarray, clustering_res: list,
                                        features: list, K_values: list, mode: str) -> dict:
+        """
+        This function runs the classification service for the given data, feature matrix, clustering results,
+        features, and K values in the specified mode.
+
+        Args:
+            X (pd.DataFrame): The input data as a DataFrame.
+            y (pd.DataFrame): The target labels as a DataFrame.
+            F (np.ndarray): The feature matrix.
+            clustering_res (list): A list of clustering results.
+            features (list): A list of feature names.
+            K_values (list): A list of K values for K-medoids clustering.
+            mode (str): The mode of the classification service, either 'Train', 'Validation', or 'Full Train'.
+
+        Returns:
+            dict: A dictionary containing the classification results.
+        """
         start = time.time()
 
         evaluations = []
@@ -76,6 +109,22 @@ class ClassificationService:
 
     def execute_classification(self, X: pd.DataFrame, y: pd.DataFrame, F: np.ndarray, results: dict, features: list,
                                K: int, mode: str) -> dict:
+        """
+        This function executes the classification for the given data, feature matrix, clustering results, features,
+        and K value in the specified mode.
+
+        Args:
+            X (pd.DataFrame): The input data as a DataFrame.
+            y (pd.DataFrame): The target labels as a DataFrame.
+            F (np.ndarray): The feature matrix.
+            results (dict): A dictionary containing the clustering results for the current K value.
+            features (list): A list of feature names.
+            K (int): The current K value for K-medoids clustering.
+            mode (str): The mode of the classification service, either 'Train', 'Validation', or 'Full Train'.
+
+        Returns:
+            dict: A dictionary containing the classification results for the current K value.
+        """
         new_X = self.prepare_data(X, F, results['Kmedoids']['Centroids'], features)
         evaluation = self.evaluate(new_X, y, K, mode)
 
@@ -86,6 +135,19 @@ class ClassificationService:
 
     @staticmethod
     def prepare_data(X: pd.DataFrame, F: np.ndarray, centroids: np.ndarray, features: list) -> pd.DataFrame:
+        """
+        This function prepares the input data by selecting the relevant features based on the provided feature matrix
+        and centroids.
+
+        Args:
+            X (pd.DataFrame): The input data as a DataFrame.
+            F (np.ndarray): The feature matrix.
+            centroids (np.ndarray): The centroids of the clustering results.
+            features (list): A list of feature names.
+
+        Returns:
+            pd.DataFrame: The prepared input data as a DataFrame.
+        """
         features_indexes = [i for i in range(len(F)) if F[i] in centroids]
         features_names = [features[i] for i in features_indexes]
         new_X = X[X.columns.intersection(features_names)]
@@ -93,6 +155,19 @@ class ClassificationService:
         return new_X
 
     def evaluate(self, X: pd.DataFrame, y: pd.DataFrame, K: int, mode: str) -> dict:
+        """
+        This function evaluates the classification models using the prepared input data and target labels for the
+        specified K value and mode. The evaluation metrics include accuracy, F1-score, and AUC (both 'ovo' and 'ovr').
+
+        Args:
+            X (pd.DataFrame): The prepared input data as a DataFrame.
+            y (pd.DataFrame): The target labels as a DataFrame.
+            K (int): The current K value for K-medoids clustering.
+            mode (str): The mode of the classification service, either 'Train', 'Validation', or 'Full Train'.
+
+        Returns:
+            dict: A dictionary containing the evaluation results for the classification models.
+        """
         classifiers_str = []
         classifier_to_accuracy = {}
         classifier_to_f1 = {}
@@ -136,6 +211,16 @@ class ClassificationService:
         }
 
     def arrange_results(self, results: list) -> dict:
+        """
+        This function arranges the classification results in various ways, such as by K, classifiers, F1-score,
+        AUC ('ovo' and 'ovr'), and accuracy.
+
+        Args:
+            results (list): A list of classification results.
+
+        Returns:
+            dict: A dictionary containing the arranged classification results.
+        """
         b_results = results
 
         new_results = {
@@ -153,6 +238,15 @@ class ClassificationService:
 
     @staticmethod
     def arrange_results_by_classifier(results: list) -> dict:
+        """
+        This function arranges the classification results by classifiers.
+
+        Args:
+            results (list): A list of classification results.
+
+        Returns:
+            dict: A dictionary containing the classification results arranged by classifiers.
+        """
         new_results = {}
         classifiers = list(results[0]['Classifiers'])
 

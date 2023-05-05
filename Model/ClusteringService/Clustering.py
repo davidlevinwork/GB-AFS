@@ -1,40 +1,29 @@
 import time
+import numpy as np
 import pandas as pd
 from array import array
 import concurrent.futures
 from sklearn_extra.cluster import KMedoids
+from Model.LogService.Log import log_service
 from sklearn.metrics import silhouette_score
 from Model.ClusteringService.Silhouette import simplified_silhouette
-
-from Model.LogService.Log import log_service
 from Model.VisualizationService.Visualization import visualization_service
 
 
 class ClusteringService:
-    def __init__(self):
-        pass
+    def execute_clustering_service(self, F: np.ndarray, K_values: list, stage: str, fold_index: int) -> list:
+        """
+        This function executes the clustering service for the given low-dimensional feature matrix, list of K values,
+        stage, and fold index.
 
-    def execute_clustering_service(self, F: pd.DataFrame, K_values: list, stage: str, fold_index: int) -> list:
-        """Get all the possible combinations of the given labels
+        Args:
+            F (np.ndarray): The low-dimensional feature matrix.
+            K_values (list): A list of K values to test.
+            stage (str): The stage of the algorithm ('Train', 'Full Train', 'Test').
+            fold_index (int): The index of the given k-fold (used for saving results & plots).
 
-        Parameters
-        ----------
-        F : pandas.DataFrame
-            JM matrix (low dimension)
-
-        K_values: list
-            K values that we want to test
-
-        stage: str
-            Stage of the algorithm (Train, Full Train, Test)
-
-        fold_index: int
-            Index of the given k-fold (for saving results & plots)
-
-        Returns
-        -------
-        list
-            list of Clustering & Silhouette results.
+        Returns:
+            list: A list of clustering and silhouette results.
         """
         start = time.time()
 
@@ -58,20 +47,16 @@ class ClusteringService:
 
     @staticmethod
     def execute_clustering(F: pd.DataFrame, K: int) -> dict:
-        """Execute the K-Medoid clustering algorithm
+        """
+        This function executes the K-Medoid clustering algorithm for the given low-dimensional feature matrix and
+        K value.
 
-        Parameters
-        ----------
-        F : pandas.DataFrame
-            JM matrix (low dimension)
+        Args:
+            F (pd.DataFrame): The low-dimensional feature matrix.
+            K (int): The number of clusters.
 
-        K: int
-            Indicates the number of clusters
-
-        Returns
-        -------
-        dict
-            K-Medoids & Silhouette results for the given K.
+        Returns:
+            dict: A dictionary containing K-Medoids and silhouette results for the given K.
         """
         results = {}
 
@@ -84,23 +69,20 @@ class ClusteringService:
 
     @staticmethod
     def run_kmedoids(F: pd.DataFrame, K: int, method: str = 'pam', init: str = 'k-medoids++') -> dict:
-        """Perform K-medoids clustering
+        """
+        This function performs K-medoids clustering on the given feature matrix and K value. It also accepts optional
+         arguments for the method and initialization of medoids.
 
-        Parameters
-        ----------
-        F : pandas.DataFrame
-            Reduced (feature similarity) matrix F
-        K : int
-            Number of clusters
-        method: str, optional
-            Which algorithm to use ('alternate' is faster while 'pam' is more accurate)
-        init: str, optional
-            Specify medoid initialization method ('random', 'heuristic', 'k-medoids++', 'build')
+        Args:
+            F (pd.DataFrame): The reduced feature similarity matrix.
+            K (int): The number of clusters.
+            method (str, optional): The algorithm to use ('alternate' is faster, while 'pam' is more accurate).
+            Defaults to 'pam'.
+            init (str, optional): The medoid initialization method ('random', 'heuristic', 'k-medoids++', 'build').
+                                  Defaults to 'k-medoids++'.
 
-        Returns
-        -------
-        Dictionary
-            Cluster labels, Cluster centroids
+        Returns:
+            dict: A dictionary containing cluster labels and centroids.
         """
         kmedoids = KMedoids(n_clusters=K, method=method, init=init).fit(F)
         results = {
@@ -112,21 +94,16 @@ class ClusteringService:
 
     @staticmethod
     def calculate_silhouette_value(X: pd.DataFrame, y: pd.DataFrame, centroids: array) -> dict:
-        """Calculate Silhouette values
+        """
+        This function calculates silhouette values for the given dataset, labels, and centroids.
 
-        Parameters
-        ----------
-        X : pandas.DataFrame
-            Dataset
-        y : pandas.DataFrame
-            Labels of the given dataset
-        centroids: array
-            The centroids of the given dataset (depending on K value)
+        Args:
+            X (pd.DataFrame): The dataset.
+            y (pd.DataFrame): The labels of the given dataset.
+            centroids (array): The centroids of the given dataset (depending on the K value).
 
-        Returns
-        -------
-        Dictionary
-            Silhouette values.
+        Returns:
+            dict: A dictionary containing silhouette values.
         """
         silhouette_results = {}
         silhouette_results['Silhouette'] = silhouette_score(X=X, labels=y)
@@ -146,18 +123,16 @@ class ClusteringService:
                                                                       eta=1.0)
         return silhouette_results
 
-    def arrange_results(self, results: list) -> list:
-        """Calculate Silhouette values
+    @staticmethod
+    def arrange_results(results: list) -> list:
+        """
+        This function sorts the input clustering and silhouette results by the K value and logs the silhouette values.
 
-        Parameters
-        ----------
-        results : list
-            All the results (clustering & Silhouette)
+        Args:
+            results (list): A list containing all the clustering and silhouette results.
 
-        Returns
-        -------
-        list
-            Sorted results list
+        Returns:
+            list: A sorted list of results by the K value.
         """
         sorted_results = sorted(results, key=lambda x: x['K'])
         for result in sorted_results:
