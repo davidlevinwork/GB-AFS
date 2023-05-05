@@ -7,8 +7,8 @@ import concurrent.futures
 from sklearn_extra.cluster import KMedoids
 from Model.LogService.Log import log_service
 from sklearn.metrics import silhouette_score
-from Model.ClusteringService.Silhouette import simplified_silhouette
 from Model.VisualizationService.Visualization import visualization_service
+from Model.ClusteringService.Silhouette import optimized_simplified_silhouette
 
 
 class ClusteringService:
@@ -107,21 +107,22 @@ class ClusteringService:
             dict: A dictionary containing silhouette values.
         """
         silhouette_results = {}
-        silhouette_results['Silhouette'] = silhouette_score(X=X, labels=y)
-        silhouette_results['S. Silhouette'] = simplified_silhouette(X=X,
+        if config.mode == "full":
+            silhouette_results['Silhouette'] = silhouette_score(X=X, labels=y)
+            silhouette_results['SS'] = optimized_simplified_silhouette(X=X,
+                                                                       labels=y,
+                                                                       centroids=centroids,
+                                                                       mode='regular',
+                                                                       norm_type='min',
+                                                                       regularization='L0',
+                                                                       eta=1.0)
+        silhouette_results['MSS'] = optimized_simplified_silhouette(X=X,
                                                                     labels=y,
                                                                     centroids=centroids,
-                                                                    mode='regular',
-                                                                    norm_type='min',
+                                                                    mode='heuristic',
+                                                                    norm_type='mean',
                                                                     regularization='L0',
                                                                     eta=1.0)
-        silhouette_results['M.S. Silhouette'] = simplified_silhouette(X=X,
-                                                                      labels=y,
-                                                                      centroids=centroids,
-                                                                      mode='heuristic',
-                                                                      norm_type='mean',
-                                                                      regularization='L0',
-                                                                      eta=1.0)
         return silhouette_results
 
     @staticmethod
