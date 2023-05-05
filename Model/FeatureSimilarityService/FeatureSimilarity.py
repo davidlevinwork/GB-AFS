@@ -9,7 +9,7 @@ from Model.LogService.Log import log_service
 
 class FeatureSimilarityService:
     @staticmethod
-    def calculate_JM_matrix(X: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame) -> np.ndarray:
+    def calculate_JM_matrix(X: pd.DataFrame, features: np.ndarray, labels: np.ndarray) -> np.ndarray:
         """Calculate the JM matrix
 
         Parameters
@@ -42,7 +42,7 @@ class FeatureSimilarityService:
         return separation_matrix
 
     @staticmethod
-    def get_label_combinations(labels: pd.DataFrame) -> list:
+    def get_label_combinations(labels: np.ndarray) -> list:
         """Get all the possible combinations of the given labels
 
         Parameters
@@ -64,7 +64,7 @@ class FeatureSimilarityService:
         return combinations
 
     @staticmethod
-    def init_JM_matrix(features: pd.DataFrame, labels: pd.DataFrame) -> np.ndarray:
+    def init_JM_matrix(features: np.ndarray, labels: np.ndarray) -> np.ndarray:
         """Init an empty JM matrix
 
         Parameters
