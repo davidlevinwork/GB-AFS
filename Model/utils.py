@@ -1,6 +1,10 @@
+import pandas as pd
 from kneed import KneeLocator
 from collections import Counter
-
+from skfeature.function.statistical_based.CFS import cfs
+from skfeature.function.similarity_based.reliefF import reliefF
+from skfeature.function.information_theoretical_based.MRMR import mrmr
+from skfeature.function.similarity_based.fisher_score import fisher_score
 
 ##################################################
 # Auxiliary functions for managing train results #
@@ -131,22 +135,29 @@ def find_knees(train_results: dict) -> dict:
         'Knees y': kn.all_knees_y
     }
 
-    kn_poly = KneeLocator(
-        x,
-        y,
-        curve='concave',
-        direction='increasing',
-        interp_method='polynomial',
-    )
-
-    kn_poly_res = {
-        'Knee': kn_poly.knee,
-        'Knee y': kn_poly.knee_y,
-        'Knees': kn_poly.all_knees,
-        'Knees y': kn_poly.all_knees_y
-    }
-
     return {
         'Interp1d': kn_res
-        # 'Polynomial': kn_poly_res
     }
+
+
+def select_k_best_features(X: pd.DataFrame, y: pd.DataFrame, k: int, algorithm: str):
+    y = y.to_numpy().reshape(y.shape[0])
+
+    if algorithm == "RELIEF":
+        score = reliefF(X.to_numpy(), y)
+        selected_features = X.columns[score.argsort()[-k:]].tolist()
+    elif algorithm == "FISHER-SCORE":
+        score = fisher_score(X.to_numpy(), y)
+        selected_features = X.columns[score.argsort()[-k:]].tolist()
+    elif algorithm == "CFS":
+        score = cfs(X.to_numpy(), y)
+        selected_features = X.columns[score.argsort()[-k:]].tolist()
+    elif algorithm == "MRMR":
+        score = mrmr(X.to_numpy(), y, k)
+        selected_features = X.columns[score].tolist()
+    elif algorithm == "RANDOM":
+        selected_features = sample(X.columns.tolist(), k)
+    else:
+        raise ValueError("Invalid algorithm name")
+
+    return X[selected_features]

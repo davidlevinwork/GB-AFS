@@ -1,14 +1,14 @@
 import time
 import numpy as np
 import pandas as pd
+from Model.LogService.Log import log_service
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
-from Model.LogService.Log import log_service
 
 
 class DataService:
     @staticmethod
-    def execute_data_service(data_set: str) -> dict:
+    def run(data_set: str) -> dict:
         """Main function of data service.
 
         Parameters
