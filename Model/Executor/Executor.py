@@ -28,14 +28,16 @@ class Executor:
         K_values = self.first_phase(data=data)
         # STAGE 2 --> Full train stage
         final_features = self.second_phase(data=data, K_values=K_values)
-        # STAGE 3 --> Test stage
-        self.execute_test(data=data, features=final_features)
-        # STAGE 4 --> Benchmarks
-        self.execute_benchmarks(data=data, k=len(final_features))
+        if config.mode == "full":
+            # STAGE 3 --> Test stage
+            self.execute_test(data=data, features=final_features)
+            # STAGE 4 --> Benchmarks
+            self.execute_benchmarks(data=data, k=len(final_features))
+        log_service.log("Info", f'SELECTED FEATURES: {list(final_features)}')
 
-    ##############################################################
-    # STAGE 1 - Execute algorithm on train folds ==> get K value #
-    ##############################################################
+    #####################################################################
+    # STAGE 1 - Execute algorithm on train folds ==> get K (knee) value #
+    #####################################################################
     def first_phase(self, data: dict) -> list:
         train_results = self.execute_train(data)
         knees = find_knees(train_results)
@@ -45,6 +47,41 @@ class Executor:
                                                           knees=knees,
                                                           stage='Train')
         return K_values
+
+    def execute_train(self, data: dict) -> dict:
+        clustering_results = {}
+        classification_results = {}
+
+        kf = KFold(n_splits=config.k_fold.n_splits,
+                   shuffle=config.k_fold.shuffle,
+                   random_state=42)
+
+        for i, (train_index, val_index) in enumerate(kf.split(data['Train'][0])):
+            log_service.log('Info', f'[Executor] : ******************** Fold Number #{i + 1} ********************')
+
+            train, validation = self.data_service.k_fold_split(data=data['Train'][0],
+                                                               train_index=train_index,
+                                                               val_index=val_index)
+            n_data = {
+                "Train": train,
+                "Validation": validation
+            }
+
+            results = self.train_procedure(data=n_data,
+                                           features=data['Features'],
+                                           labels=data['Labels'],
+                                           K_values=[*range(2, len(data['Features']), 1)],
+                                           stage="Train",
+                                           fold_index=i + 1)
+
+            clustering_results[i] = results['Clustering']
+            if config.mode == "full":
+                classification_results[i] = results['Classification']
+
+        train_results = get_train_results(classification_results=classification_results,
+                                          clustering_results=clustering_results,
+                                          n_folds=i)
+        return train_results
 
     def train_procedure(self, data: dict, features: np.ndarray, labels: np.ndarray, K_values: list, stage: str,
                         fold_index: int) -> dict:
@@ -74,62 +111,26 @@ class Executor:
                 "Train": (data['Train'][1], data['Train'][2])
             }
 
-        classification_res = self.classification_service.classify(mode=stage,
-                                                                  data=fixed_data,
-                                                                  F=F_reduced,
-                                                                  clustering_res=clustering_res,
-                                                                  features=list(features),
-                                                                  K_values=K_values)
+        if config.mode == "basic":
+            return {"Clustering": clustering_res}
+        else:
+            classification_res = self.classification_service.classify(mode=stage,
+                                                                      data=fixed_data,
+                                                                      F=F_reduced,
+                                                                      clustering_res=clustering_res,
+                                                                      features=list(features),
+                                                                      K_values=K_values)
 
-        # Create results table
-        self.table_service.create_table(fold_index=str(fold_index),
-                                        stage=stage,
-                                        classification_res=classification_res)
+            self.table_service.create_table(fold_index=str(fold_index),
+                                            stage=stage,
+                                            classification_res=classification_res)
 
-        return {
-            "Clustering": clustering_res,
-            "Classification": classification_res
-        }
+            return {"Clustering": clustering_res,
+                    "Classification": classification_res}
 
-    def execute_train(self, data: dict) -> dict:
-        clustering_results = {}
-        classification_results = {}
-
-        # Initialize the KFold object with k splits and shuffle the data
-        kf = KFold(n_splits=config.k_fold.n_splits,
-                   shuffle=config.k_fold.shuffle,
-                   random_state=42)
-
-        for i, (train_index, val_index) in enumerate(kf.split(data['Train'][0])):
-            log_service.log('Info', f'[Executor] : ******************** Fold Number #{i + 1} ********************')
-
-            train, validation = self.data_service.k_fold_split(data=data['Train'][0],
-                                                               train_index=train_index,
-                                                               val_index=val_index)
-            n_data = {
-                "Train": train,
-                "Validation": validation
-            }
-
-            results = self.train_procedure(data=n_data,
-                                           features=data['Features'],
-                                           labels=data['Labels'],
-                                           K_values=[*range(2, len(data['Features']), 1)],
-                                           stage="Train",
-                                           fold_index=i + 1)
-
-            clustering_results[i] = results['Clustering']
-            classification_results[i] = results['Classification']
-
-        train_results = get_train_results(classification_results=classification_results,
-                                          clustering_results=clustering_results,
-                                          n_folds=i)
-
-        return train_results
-
-    ############################################################################
-    # STAGE 2 - Execute algorithm on full train (only) on K ==> get K features #
-    ############################################################################
+    ##################################################################################
+    # STAGE 2 - Execute algorithm on full train (only) on K ==> get final K features #
+    ##################################################################################
     def second_phase(self, data: dict, K_values: list) -> np.ndarray:
         log_service.log('Info', f'[Executor] : ********************* Full Train *********************')
 
@@ -146,9 +147,9 @@ class Executor:
 
         return results['Clustering'][0]['Kmedoids']['Features']
 
-    #####################################################################
-    # STAGE 3 - Execute algorithm on full test (only) on the K features #
-    #####################################################################
+    ##############################################################################################
+    # STAGE 3 (full mode only) - Execute classification on test set with the K selected features #
+    ##############################################################################################
     def execute_test(self, data: dict, features: np.ndarray):
         log_service.log('Info', f'[Executor] : ********************* Test *********************')
 
@@ -166,9 +167,9 @@ class Executor:
                                         stage="Test",
                                         classification_res={"Test": final_results})
 
-    ################################################################
-    # STAGE 4 - Execute benchmarks algorithm on the chosen K value #
-    ################################################################
+    ###########################################################################################################
+    # STAGE 4 (full mode only) - Execute benchmarks  on test set (each method will define the best K features #
+    ###########################################################################################################
     def execute_benchmarks(self, data: dict, k: int):
         log_service.log('Info', f'[Executor] : ********************* Bench Marks *********************')
 

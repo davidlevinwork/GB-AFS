@@ -12,6 +12,7 @@ class DataService:
         self.data_set_path = config.dataset.dataset_path
         self.label_column = config.dataset.label_column_str
         self.train_size, self.test_size = map(int, config.dataset.train_test_split.split("-"))
+        self.train_size, self.test_size = self.train_size / 100, self.test_size / 100
 
     def run(self) -> dict:
         """Main function of data service.

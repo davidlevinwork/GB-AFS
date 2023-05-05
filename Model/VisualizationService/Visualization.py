@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+from config import config
 from datetime import datetime
 import matplotlib.pyplot as plt
 from Model.LogService.Log import log_service
@@ -65,7 +66,7 @@ class VisualizationService:
 
             ax.grid(True, linestyle='-.', color='gray')
 
-            # Set x and y axis limits to start from 0
+            # Set x and y-axis limits to start from 0
             ax.set_ylim(0, 1)
             ax.set_xlim(0, max(k_values))
 
@@ -163,17 +164,17 @@ class VisualizationService:
                                                    len(clustering_res[0]['Silhouette']))]
 
             # Left Y axis (accuracy)
-            for classifier, classifier_val in classification_res.items():
-                x_values = [*range(2, len(classification_res[classifier]) + 2, 1)]
-                label = VisualizationService.get_classifier_label(str(classifier))
-                ax.plot(x_values, classifier_val, linestyle="-.", label=label, c=colors[c_index])
-                c_index += 1
+            if config.mode == "full":
+                for classifier, classifier_val in classification_res.items():
+                    x_values = [*range(2, len(classification_res[classifier]) + 2, 1)]
+                    label = VisualizationService.get_classifier_label(str(classifier))
+                    ax.plot(x_values, classifier_val, linestyle="-.", label=label, c=colors[c_index])
+                    c_index += 1
 
             ax.set_xlabel("K value")
             ax.set_ylabel("Accuracy")
             ax.grid(True, linestyle='-.')
             ax.spines['top'].set_visible(False)
-            # ax.legend(loc='lower left', bbox_to_anchor=(0, 1.02, 1, 0.2), ncol=4, shadow=True, fancybox=True)
 
             # Right Y axis (silhouette)
             ax2 = ax.twinx()

@@ -1,4 +1,5 @@
 import pandas as pd
+from config import config
 from random import sample
 from kneed import KneeLocator
 from collections import Counter
@@ -29,8 +30,11 @@ def get_train_results(classification_results: dict, clustering_results: dict, n_
      dict
          Train results (sorted & fixed)
      """
+    classification = {}
     clustering = get_train_clustering(clustering_results)
-    classification = get_train_classification(classification_results, n_folds)
+
+    if config.mode == "full":
+        classification = get_train_classification(classification_results, n_folds)
 
     return {
         'Clustering': clustering,
@@ -120,7 +124,7 @@ def find_knees(train_results: dict) -> dict:
          Clustering results
      """
     x = [res['K'] for res in train_results['Clustering']]
-    y = [res['Silhouette']['M.S. Silhouette'] for res in train_results['Clustering']]
+    y = [res['Silhouette']['MSS'] for res in train_results['Clustering']]
 
     kn = KneeLocator(
         x,
