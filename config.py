@@ -20,7 +20,6 @@ class KFoldConfig:
 class TSNEConfig:
     n_iter: int
     perplexity: int
-    n_components: int
 
 
 @dataclass
@@ -53,7 +52,8 @@ def from_dict(data: Dict[str, Any]) -> Config:
 
 
 def load_yaml_config(file_path: str) -> Config:
-    """Load configuration from a YAML file.
+    """
+    Load configuration from a YAML file.
 
     Args:
         file_path (str): Path to the YAML configuration file.
