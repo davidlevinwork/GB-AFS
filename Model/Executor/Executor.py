@@ -9,7 +9,7 @@ from Model.ClassificationService import Classification
 from Model.FeatureSimilarityService import FeatureSimilarity
 from Model.DimensionReductionService import DimensionReduction
 from Model.VisualizationService.Visualization import visualization_service
-from Model.utils import compile_train_results, find_knees, select_k_best_features
+from Model.utils import compile_train_results, find_knees, select_k_best_features, summarize_final_results
 
 
 class Executor:
@@ -40,7 +40,8 @@ class Executor:
             self.execute_test(data=data, features=final_features)
             # STAGE 4 --> Benchmarks
             self.execute_benchmarks(data=data, k=len(final_features))
-        log_service.log("Result", f'----> SELECTED FEATURES: {list(final_features).sort()} <----')
+
+        summarize_final_results(data=data, final_features=final_features)
 
     #####################################################################
     # STAGE 1 - Execute algorithm on train folds ==> get K (knee) value #

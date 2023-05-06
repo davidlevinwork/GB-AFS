@@ -1,8 +1,10 @@
+import numpy as np
 import pandas as pd
 from config import config
 from random import sample
 from kneed import KneeLocator
 from collections import Counter
+from Model.LogService.Log import log_service
 from skfeature.function.statistical_based.CFS import cfs
 from skfeature.function.similarity_based.reliefF import reliefF
 from skfeature.function.information_theoretical_based.MRMR import mrmr
@@ -163,3 +165,24 @@ def select_k_best_features(X: pd.DataFrame, y: pd.DataFrame, k: int, algorithm: 
         raise ValueError("Invalid algorithm name")
 
     return X[selected_features]
+
+
+def summarize_final_results(data: dict, final_features: np.ndarray) -> None:
+    """
+    Summarizes the final results of the feature selection process, including the total number of features,
+    the number of selected features, and the list of selected features. Logs the results using the log_service.
+
+    Args:
+        data (dict): A dictionary containing the feature dataset information.
+        final_features (np.ndarray): A NumPy array of the selected feature indices.
+    """
+    n_all_features = len(data['Features'])
+    n_selected_features = len(final_features)
+
+    seperator = "$************************************************************************************$"
+
+    log_service.log("Result", seperator)
+    log_service.log("Result", f'-----> Out of total of [{n_all_features}] features, '
+                              f'GB-AFS selected only [{n_selected_features}] features.')
+    log_service.log("Result", f'-----> The features that were selected are: {sorted(list(final_features))}.')
+    log_service.log("Result", seperator)
