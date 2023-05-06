@@ -14,24 +14,40 @@ cmap = plt.get_cmap('nipy_spectral')
 class VisualizationService:
     @staticmethod
     def save_plot(file: plt, stage: str, header: str, fold_index: str, title: str):
+        """
+        Save the given plot as an image file.
+
+        Args:
+            file (plt): The plot to be saved.
+            stage (str): The stage of the process, e.g. 'Train' or 'Test'.
+            header (str): The header for the plot.
+            fold_index (str): The fold index for the plot.
+            title (str): The title of the plot.
+        """
         try:
             current_dir = os.path.dirname(__file__)
             if stage == 'Train':
-                results_dir = \
-                    os.path.join(current_dir, '../', 'Files', 'Plots', f'{time_stamp}', f'{stage}',
-                                 f'Fold #{fold_index}', f'{header}')
+                results_dir = os.path.join(current_dir, '../', 'Files', 'Plots', f'{time_stamp}', f'{stage}',
+                                           f'Fold #{fold_index}', f'{header}')
             else:
-                results_dir = \
-                    os.path.join(current_dir, '../', 'Files/', 'Plots/', f'{time_stamp}', f'{stage}', f'{header}')
+                results_dir = os.path.join(current_dir, '../', 'Files', 'Plots', f'{time_stamp}', f'{stage}', f'{header}')
 
             if not os.path.isdir(results_dir):
                 os.makedirs(results_dir)
 
             file.savefig(os.path.join(results_dir, title))
-        except AssertionError as ex:
+        except Exception as ex:
             log_service.log('Error', f'[Visualization Service] - Failed to save plot as a file. Error: [{ex}]')
 
     def plot_tsne(self, data: np.ndarray, stage: str, fold_index: int):
+        """
+        Plot t-SNE visualization.
+
+        Args:
+            data (np.ndarray): The t-SNE data to be plotted.
+            stage (str): The stage of the process, e.g. 'Train' or 'Test'.
+            fold_index (int): The fold index for the plot.
+        """
         try:
             plt.clf()
             plt.figure(figsize=(10, 8))
@@ -45,10 +61,18 @@ class VisualizationService:
             plt.title(f't-SNE Result')
 
             self.save_plot(plt, stage, 'Dimensionality Reduction', f'{fold_index}', 't-SNE')
-        except AssertionError as ex:
+        except Exception as ex:
             log_service.log('Error', f'[Visualization Service] - Failed to plot t-SNE graph. Error: [{ex}]')
 
     def plot_silhouette(self, clustering_results: list, stage: str, fold_index: int):
+        """
+        Plot silhouette visualization.
+
+        Args:
+            clustering_results (list): A list of clustering results.
+            stage (str): The stage of the process, e.g. 'Train' or 'Test'.
+            fold_index (int): The fold index for the plot.
+        """
         try:
             plt.clf()
             fig, ax = plt.subplots(figsize=(8, 6))
@@ -87,6 +111,15 @@ class VisualizationService:
             log_service.log('Error', f'[Visualization Service] - Failed to plot silhouette graph. Error: [{ex}]')
 
     def plot_clustering(self, F: pd.DataFrame, clustering_results: list, stage: str, fold_index: int):
+        """
+        Plot clustering visualization.
+
+        Args:
+            F (pd.DataFrame): The data frame containing feature values.
+            clustering_results (list): A list of clustering results.
+            stage (str): The stage of the process, e.g. 'Train' or 'Test'.
+            fold_index (int): The fold index for the plot.
+        """
         try:
             plt.clf()
             fig, ax = plt.subplots(figsize=(8, 6))
@@ -122,6 +155,15 @@ class VisualizationService:
             log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
 
     def plot_upgrade_clustering(self, F: pd.DataFrame, clustering_results: list, stage: str, fold_index: int):
+        """
+        Plot clustering visualization with upgraded features.
+
+        Args:
+            F (pd.DataFrame): The data frame containing feature values.
+            clustering_results (list): A list of clustering results.
+            stage (str): The stage of the process, e.g. 'Train' or 'Test'.
+            fold_index (int): The fold index for the plot.
+        """
         try:
             c = F[:, 0] + F[:, 1]
             for clustering_result in clustering_results:
@@ -132,7 +174,7 @@ class VisualizationService:
                 centroids = clustering_result['Kmedoids']['Centroids']
                 plt.scatter(F[:, 0], F[:, 1], c=c, cmap='Wistia')
                 plt.scatter(centroids[:, 0], centroids[:, 1], marker='o', color='black', facecolors='none',
-                            linewidth=1.25, label="Ours")
+                            linewidth=1.25, label="GB-AFS")
 
                 plt.xlabel(r'$\lambda_1\psi_1$')
                 plt.ylabel(r'$\lambda_2\psi_2$')
@@ -154,11 +196,19 @@ class VisualizationService:
             log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
 
     def plot_accuracy_to_silhouette(self, classification_res: dict, clustering_res: list, knees: dict, stage: str):
+        """
+        Plot the accuracy to silhouette graph.
+
+        Args:
+            classification_res (dict): The classification results.
+            clustering_res (list): A list of clustering results.
+            knees (dict): The knee points.
+            stage (str): The stage of the process, e.g. 'Train' or 'Test'.
+        """
         try:
             plt.clf()
             fig, ax = plt.subplots(figsize=(8, 6))
 
-            # Get the colors from the color map
             c_index = 0
             colors = [cmap(i) for i in np.linspace(0, 1, len(classification_res) + len(knees) +
                                                    len(clustering_res[0]['Silhouette']))]

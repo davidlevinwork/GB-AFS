@@ -13,7 +13,8 @@ class LogService:
 
     @staticmethod
     def log(level="Info", data=None):
-        """Log a message with the given log level and data.
+        """
+        Log a message with the given log level and data.
 
         Args:
             level (str, optional): Log level, one of "Debug", "Info", "Warning", "Error", "Critical".

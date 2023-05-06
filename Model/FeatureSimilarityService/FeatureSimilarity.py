@@ -10,21 +10,16 @@ from Model.LogService.Log import log_service
 class FeatureSimilarityService:
     @staticmethod
     def calculate_JM_matrix(X: pd.DataFrame, features: np.ndarray, labels: np.ndarray) -> np.ndarray:
-        """Calculate the JM matrix
+        """
+        Calculate the JM matrix.
 
-        Parameters
-        ----------
-        X : pandas.DataFrame
-            Data frame of the data set
-        features: pandas.DataFrame
-            Feature names of the given data set
-        labels : pandas.DataFrame
-            Label names of the given data set
+        Args:
+            X (pd.DataFrame): Data frame of the data set.
+            features (np.ndarray): Feature names of the given data set.
+            labels (np.ndarray): Label names of the given data set.
 
-        Returns
-        -------
-        np.ndarray
-            JM (feature similarity) matrix.
+        Returns:
+            np.ndarray: JM (feature similarity) matrix.
         """
         start = time.time()
         label_combinations = FeatureSimilarityService.get_label_combinations(labels)
@@ -43,17 +38,14 @@ class FeatureSimilarityService:
 
     @staticmethod
     def get_label_combinations(labels: np.ndarray) -> list:
-        """Get all the possible combinations of the given labels
+        """
+        Get all the possible combinations of the given labels.
 
-        Parameters
-        ----------
-        labels : pandas.DataFrame
-            Label names of the given data set
+        Args:
+            labels (np.ndarray): Label names of the given data set.
 
-        Returns
-        -------
-        list
-            list of all the label combinations.
+        Returns:
+            list: List of all the label combinations.
         """
         combinations = []
         min_label, max_label = min(labels), max(labels)
@@ -65,19 +57,15 @@ class FeatureSimilarityService:
 
     @staticmethod
     def init_JM_matrix(features: np.ndarray, labels: np.ndarray) -> np.ndarray:
-        """Init an empty JM matrix
+        """
+        Initialize an empty JM matrix.
 
-        Parameters
-        ----------
-        features: pandas.DataFrame
-            Feature names of the given data set
-        labels : pandas.DataFrame
-            Label names of the given data set
+        Args:
+            features (np.ndarray): Feature names of the given data set.
+            labels (np.ndarray): Label names of the given data set.
 
-        Returns
-        -------
-        np.ndarray
-            New JM (feature similarity) matrix.
+        Returns:
+            np.ndarray: New JM (feature similarity) matrix.
         """
         matrix = np.zeros((len(features), math.comb(len(labels), 2)))
         return matrix

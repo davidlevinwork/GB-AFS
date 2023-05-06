@@ -3,6 +3,21 @@ from sklearn.metrics.pairwise import euclidean_distances
 
 
 def optimized_simplified_silhouette(X, labels, centroids, mode, norm_type, regularization, eta) -> np.ndarray:
+    """
+    Compute the optimized simplified silhouette score for a set of data points, labels, and centroids.
+
+    Args:
+        X (np.ndarray): The feature matrix with shape (n_samples, n_features).
+        labels (np.ndarray): The cluster labels for each data point with shape (n_samples,).
+        centroids (np.ndarray): The cluster centroids with shape (n_clusters, n_features).
+        mode (str): The mode for silhouette computation, either 'heuristic' or 'regular'.
+        norm_type (str): The type of normalization to use for distances to other centroids, either 'min' or 'mean'.
+        regularization (str): The type of regularization to apply, either 'L1', 'L2', or 'none'.
+        eta (float): The regularization coefficient.
+
+    Returns:
+        float: The mean optimized simplified silhouette score.
+    """
     a = euclidean_distances(X, centroids[labels]).diagonal()
 
     b = np.empty_like(a)

@@ -15,12 +15,12 @@ class DataService:
         self.train_size, self.test_size = self.train_size / 100, self.test_size / 100
 
     def run(self) -> dict:
-        """Main function of data service.
+        """
+        Main function of data service.
 
-        Returns
-        -------
-        dict
-            Dictionary that contains all the relevant information of the given data set.
+        Returns:
+            dict: A dictionary that contains all the relevant information of the given data set.
+                  Keys include 'Dataset', 'N. Dataset', 'Train', 'Test', 'Features', and 'Labels'.
         """
         start = time.time()
 
@@ -37,40 +37,35 @@ class DataService:
         results['Labels'] = self.get_labels(results['Train'][2])
 
         end = time.time()
-        log_service.log('Info', f'[Data Service] : Data set name: ({self.data_set_path}.csv) * Number of features: '
-                                f'({len(results["Features"])}) * Number of labels: ({len(results["Labels"])})')
+        log_service.log('Info', f'[Data Service] : Data set path: ({self.data_set_path}.csv) *'
+                                f'Number of features: ({len(results["Features"])}) *'
+                                f' Number of labels: ({len(results["Labels"])})')
         log_service.log('Debug', f'[Data Service] : Total run time in seconds: [{round(end - start, 3)}]')
         return results
 
     @staticmethod
     def load_data(data_set: str) -> pd.DataFrame:
-        """Load data.
+        """
+        Load data.
 
-        Parameters
-        ----------
-        data_set : str
-            Dataset name
+        Args:
+            data_set (str): Dataset name
 
-        Returns
-        -------
-        pandas.DataFrame
-            Processed data as a data frame.
+        Returns:
+            pd.DataFrame: Processed data as a data frame.
         """
         df = pd.DataFrame(pd.read_csv(f'./Model/Datasets/{data_set}.csv'))
         return df
 
     def normalize_features(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Normalize the feature values to [0, 1] range.
+        """
+        Normalize the feature values to [0, 1] range.
 
-        Parameters
-        ----------
-        X : pandas.DataFrame
-            Input data
+        Args:
+            X (pd.DataFrame): Input data
 
-        Returns
-        -------
-        pandas.DataFrame
-            Normalized input data.
+        Returns:
+            pd.DataFrame: Normalized input data.
         """
         column_names = X.columns
         cols_to_normalize = X.columns.difference([self.label_column])
@@ -83,18 +78,15 @@ class DataService:
         return X
 
     def train_test_split(self, df: pd.DataFrame) -> tuple:
-        """Split data into train and test sets
+        """
+        Split data into train and test sets.
 
-         Parameters
-         ----------
-         df : pandas.DataFrame
-             Data frame of the data set
+        Args:
+            df (pd.DataFrame): Data frame of the data set
 
-         Returns
-         -------
-         tuple
-             Train and test data as two separate tuples.
-         """
+        Returns:
+            tuple: Train and test data as two separate tuples.
+        """
         train, test = train_test_split(df, test_size=self.test_size)
 
         X_train = train.drop(self.label_column, axis=1)
@@ -106,53 +98,42 @@ class DataService:
 
     @staticmethod
     def get_features(X: pd.DataFrame) -> pd.DataFrame:
-        """Extract features names
+        """
+        Extract feature names.
 
-        Parameters
-        ----------
-        X : pandas.DataFrame
-            Input data
+        Args:
+            X (pd.DataFrame): Input data
 
-        Returns
-        -------
-        pandas.DataFrame
-            Feature names of the given data set.
+        Returns:
+            pd.DataFrame: Feature names of the given data set.
         """
         return X.columns
 
     def get_labels(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Extract labels names
+        """
+        Extract label names.
 
-        Parameters
-        ----------
-        X : pandas.DataFrame
-            Input data
+        Args:
+            X (pd.DataFrame): Input data
 
-        Returns
-        -------
-        pandas.DataFrame
-            Label names of the given data set.
+        Returns:
+            pd.DataFrame: Label names of the given data set.
         """
         labels_names = X[self.label_column].unique()
         return labels_names
 
     def k_fold_split(self, data: pd.DataFrame, train_index: np.ndarray, val_index: np.ndarray) -> tuple:
-        """Split data into train and validation sets
+        """
+        Split data into train and validation sets.
 
-         Parameters
-         ----------
-         data : pandas.DataFrame
-             Data frame of the data set
-         train_index : numpy.ndarray
-             Indexes associated with the training set (in the current fold)
-         val_index : numpy.ndarray
-             Indexes associated with the validation set (in the current fold)
+        Args:
+            data (pd.DataFrame): Data frame of the data set
+            train_index (np.ndarray): Indexes associated with the training set (in the current fold)
+            val_index (np.ndarray): Indexes associated with the validation set (in the current fold)
 
-         Returns
-         -------
-         tuple
-             Train and validation data as two separate tuples.
-         """
+        Returns:
+            tuple: Train and validation data as two separate tuples.
+        """
         train = data.iloc[train_index]
         X_train = train.drop(self.label_column, axis=1)
         y_train = pd.DataFrame(train[self.label_column])

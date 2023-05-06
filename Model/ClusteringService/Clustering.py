@@ -1,3 +1,4 @@
+import os
 import time
 import numpy as np
 import pandas as pd
@@ -12,7 +13,8 @@ from Model.ClusteringService.Silhouette import optimized_simplified_silhouette
 
 
 class ClusteringService:
-    def execute_clustering_service(self, F: np.ndarray, K_values: list, stage: str, fold_index: int) -> list:
+    def execute_clustering_service(self, F: np.ndarray, K_values: list, stage: str, fold_index: int,
+                                   max_workers=None) -> list:
         """
         This function executes the clustering service for the given low-dimensional feature matrix, list of K values,
         stage, and fold index.
@@ -22,20 +24,28 @@ class ClusteringService:
             K_values (list): A list of K values to test.
             stage (str): The stage of the algorithm ('Train', 'Full Train', 'Test').
             fold_index (int): The index of the given k-fold (used for saving results & plots).
+            max_workers (int, optional): The maximum number of workers for the ThreadPoolExecutor.
+                                         Defaults to min(32, os.cpu_count() + 4).
 
         Returns:
-            list: A list of clustering and silhouette results.
+            list: A list of tuples containing clustering and silhouette results for each K value.
         """
         start = time.time()
 
+        if max_workers is None:
+            max_workers = min(32, os.cpu_count() + 4)
+
         results = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit a task for each K value
-            tasks = [executor.submit(ClusteringService.execute_clustering, F, K) for K in K_values]
+            tasks = [executor.submit(self.execute_clustering, F, K) for K in K_values]
 
             # Wait for the tasks to complete and store the results
             for task in concurrent.futures.as_completed(tasks):
-                results.append(task.result())
+                try:
+                    results.append(task.result())
+                except Exception as e:
+                    log_service.log('Error', f'[Clustering Service] : Error in clustering task: {e}')
 
         results = self.arrange_results(results)
         visualization_service.plot_silhouette(results, stage, fold_index)

@@ -6,6 +6,14 @@ from prettytable import PrettyTable
 class TableService:
     @staticmethod
     def create_table(fold_index: str, stage: str, classification_res: dict):
+        """
+        Create a table with classification results for the given fold index and stage.
+
+        Args:
+            fold_index (str): Index of the k-fold.
+            stage (str): Stage of the algorithm (Train, Full Train, Test).
+            classification_res (dict): Classification results.
+        """
         train_results = test_results = None
 
         metrics = ['F1', 'AUC-ovo', 'Accuracy', 'AUC-ovr']
@@ -38,6 +46,15 @@ class TableService:
 
     @staticmethod
     def save_table(table: PrettyTable, metric: str, fold_index: str, stage: str):
+        """
+        Save the classification results table to a file.
+
+        Args:
+            table (PrettyTable): Classification results table.
+            metric (str): Metric used for classification results.
+            fold_index (str): Index of the k-fold.
+            stage (str): Stage of the algorithm (Train, Full Train, Test).
+        """
         try:
             current_dir = os.path.dirname(__file__)
             plots_dir = os.path.join(current_dir, '..', 'Files', 'Plots')

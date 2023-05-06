@@ -13,28 +13,23 @@ from skfeature.function.similarity_based.fisher_score import fisher_score
 # Auxiliary functions for managing train results #
 ##################################################
 
-def get_train_results(classification_results: dict, clustering_results: dict, n_folds: int) -> dict:
-    """Create dictionary that holds all the train results (classification & clustering)
+def compile_train_results(classification_results: dict, clustering_results: dict, n_folds: int) -> dict:
+    """
+    Create a dictionary that holds all the train results (classification & clustering).
 
-     Parameters
-     ----------
-     classification_results : dict
-         Classification results of the training stage
-     clustering_results : dict
-         Clustering results of the training stage
-     n_folds : int
-         Number of folds used during training
+    Args:
+        classification_results (dict): Classification results of the training stage.
+        clustering_results (dict): Clustering results of the training stage.
+        n_folds (int): Number of folds used during training.
 
-     Returns
-     -------
-     dict
-         Train results (sorted & fixed)
-     """
+    Returns:
+        dict: Train results (sorted & fixed).
+    """
     classification = {}
-    clustering = get_train_clustering(clustering_results)
+    clustering = compile_train_clustering_results(clustering_results)
 
     if config.mode == "full":
-        classification = get_train_classification(classification_results, n_folds)
+        classification = compile_train_classification_results(classification_results, n_folds)
 
     return {
         'Clustering': clustering,
@@ -42,27 +37,23 @@ def get_train_results(classification_results: dict, clustering_results: dict, n_
     }
 
 
-def get_train_classification(results: dict, n_folds: int) -> dict:
-    """Create dictionary that holds all the train classification results
+def compile_train_classification_results(results: dict, n_folds: int) -> dict:
+    """
+    Create a dictionary that holds all the train classification results.
 
-     Parameters
-     ----------
-     results : list
-        Clustering results of the training stage
-     n_folds: int
-        Number of folds used during training
+    Args:
+        results (dict): Classification results of the training stage.
+        n_folds (int): Number of folds used during training.
 
-     Returns
-     -------
-     dict
-         Classification results
-     """
+    Returns:
+        dict: Combined classification results.
+    """
     # Init with the results of the first fold
-    combined_results = results[0]['Test']['Results By Classifiers']
+    combined_results = results[0]['Validation']['Results By Classifiers']
 
     # Sum
     for i in range(1, n_folds):
-        classifiers = results[i]['Test']['Results By Classifiers']
+        classifiers = results[i]['Validation']['Results By Classifiers']
         for classifier, classifier_results in classifiers.items():
             combined_results[classifier] = dict(Counter(combined_results[classifier]) + Counter(classifier_results))
 
@@ -73,26 +64,22 @@ def get_train_classification(results: dict, n_folds: int) -> dict:
     return combined_results
 
 
-def get_train_clustering(results: dict) -> list:
-    """Create dictionary that holds all the train clustering results
+def compile_train_clustering_results(results: dict) -> list:
+    """
+    Create a dictionary that holds all the train clustering results.
 
-     Parameters
-     ----------
-     results : list
-         Clustering results of the training stage
+    Args:
+        results (dict): Clustering results of the training stage.
 
-     Returns
-     -------
-     dict
-         Clustering results
-     """
+    Returns:
+        list: Combined clustering results.
+    """
     # Init with the results of the first fold
     combined_results = results[0]
 
     # Sum
     for i in range(1, len(results)):
         for j, result in enumerate(results[i]):
-            k = result['K']
             sub_results = result['Silhouette']
             for sil_name, sil_value in sub_results.items():
                 combined_results[j]['Silhouette'][sil_name] += sil_value
@@ -111,18 +98,15 @@ def get_train_clustering(results: dict) -> list:
 #############################################################################
 
 def find_knees(train_results: dict) -> dict:
-    """Find the potential K values to stop the algorithm ("knees")
+    """
+    Find the potential K values to stop the algorithm ("knees").
 
-     Parameters
-     ----------
-     train_results : dict
-         Train results of the training stage
+    Args:
+        train_results (dict): Train results of the training stage.
 
-     Returns
-     -------
-     dict
-         Clustering results
-     """
+    Returns:
+        dict: Potential K values.
+    """
     x = [res['K'] for res in train_results['Clustering']]
     y = [res['Silhouette']['MSS'] for res in train_results['Clustering']]
 
@@ -147,6 +131,18 @@ def find_knees(train_results: dict) -> dict:
 
 
 def select_k_best_features(X: pd.DataFrame, y: pd.DataFrame, k: int, algorithm: str):
+    """
+    Select k best features from the dataset using the specified algorithm.
+
+    Args:
+        X (pd.DataFrame): Feature matrix.
+        y (pd.DataFrame): Target vector.
+        k (int): Number of features to select.
+        algorithm (str): Algorithm to use for feature selection.
+
+    Returns:
+        pd.DataFrame: Dataframe with selected features.
+    """
     y = y.to_numpy().reshape(y.shape[0])
 
     if algorithm == "RELIEF":

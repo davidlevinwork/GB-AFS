@@ -9,7 +9,7 @@ from Model.ClassificationService import Classification
 from Model.FeatureSimilarityService import FeatureSimilarity
 from Model.DimensionReductionService import DimensionReduction
 from Model.VisualizationService.Visualization import visualization_service
-from Model.utils import get_train_results, find_knees, select_k_best_features
+from Model.utils import compile_train_results, find_knees, select_k_best_features
 
 
 class Executor:
@@ -22,6 +22,13 @@ class Executor:
         self.dimension_reduction_service = DimensionReduction.DimensionReductionService()
 
     def run(self):
+        """
+        Execute the full workflow of the algorithm, consisting of four stages:
+        1. Train stage (first_phase)
+        2. Full train stage (second_phase)
+        3. Test stage (execute_test) - only in full mode
+        4. Benchmarks (execute_benchmarks) - only in full mode
+        """
         # Prepare the data
         data = self.data_service.run()
         # STAGE 1 --> Train stage
@@ -33,12 +40,22 @@ class Executor:
             self.execute_test(data=data, features=final_features)
             # STAGE 4 --> Benchmarks
             self.execute_benchmarks(data=data, k=len(final_features))
-        log_service.log("Info", f'SELECTED FEATURES: {list(final_features)}')
+        log_service.log("Result", f'----> SELECTED FEATURES: {list(final_features).sort()} <----')
 
     #####################################################################
     # STAGE 1 - Execute algorithm on train folds ==> get K (knee) value #
     #####################################################################
     def first_phase(self, data: dict) -> list:
+        """
+        Execute the first phase, which is the train stage. This phase aims to get the K (knee) value.
+
+        Args:
+            data (dict): A dictionary containing the dataset information.
+
+        Returns:
+            list: A list containing the K (knee) value.
+        """
+
         train_results = self.execute_train(data)
         knees = find_knees(train_results)
         K_values = list([knees['Interp1d']['Knee']])
@@ -49,6 +66,15 @@ class Executor:
         return K_values
 
     def execute_train(self, data: dict) -> dict:
+        """
+        Execute the train stage of the algorithm on the given dataset.
+
+        Args:
+            data (dict): A dictionary containing the dataset information.
+
+        Returns:
+            dict: A dictionary containing the train results.
+        """
         clustering_results = {}
         classification_results = {}
 
@@ -78,13 +104,28 @@ class Executor:
             if config.mode == "full":
                 classification_results[i] = results['Classification']
 
-        train_results = get_train_results(classification_results=classification_results,
-                                          clustering_results=clustering_results,
-                                          n_folds=i)
+        train_results = compile_train_results(classification_results=classification_results,
+                                              clustering_results=clustering_results,
+                                              n_folds=i)
         return train_results
 
     def train_procedure(self, data: dict, features: np.ndarray, labels: np.ndarray, K_values: list, stage: str,
                         fold_index: int) -> dict:
+        """
+        Executes the training procedure of the algorithm.
+
+        Args:
+            data (dict): A dictionary containing the dataset information.
+            features (np.ndarray): A NumPy array containing the features.
+            labels (np.ndarray): A NumPy array containing the labels.
+            K_values (list): A list containing the K values.
+            stage (str): A string representing the stage of the algorithm.
+            fold_index (int): An integer representing the fold index.
+
+        Returns:
+            dict: A dictionary containing the results of the clustering and classification procedures.
+        """
+
         # Calculate the feature similarity matrix
         F = self.feature_similarity_service.calculate_JM_matrix(X=data['Train'][0],
                                                                 features=features,
@@ -116,10 +157,10 @@ class Executor:
         else:
             classification_res = self.classification_service.classify(mode=stage,
                                                                       data=fixed_data,
-                                                                      F=F_reduced,
-                                                                      clustering_res=clustering_res,
-                                                                      features=list(features),
-                                                                      K_values=K_values)
+                                                                      feature_matrix=F_reduced,
+                                                                      clustering_results=clustering_res,
+                                                                      feature_names=list(features),
+                                                                      k_values=K_values)
 
             self.table_service.create_table(fold_index=str(fold_index),
                                             stage=stage,
@@ -132,6 +173,16 @@ class Executor:
     # STAGE 2 - Execute algorithm on full train (only) on K ==> get final K features #
     ##################################################################################
     def second_phase(self, data: dict, K_values: list) -> np.ndarray:
+        """
+        Execute the second phase, which is the full train stage. This phase aims to get the final K features.
+
+        Args:
+            data (dict): A dictionary containing the dataset information.
+            K_values (list): A list containing the K values.
+
+        Returns:
+            np.ndarray: A NumPy array containing the final K features.
+        """
         log_service.log('Info', f'[Executor] : ********************* Full Train *********************')
 
         n_data = {
@@ -151,6 +202,14 @@ class Executor:
     # STAGE 3 (full mode only) - Execute classification on test set with the K selected features #
     ##############################################################################################
     def execute_test(self, data: dict, features: np.ndarray):
+        """
+        Execute the test stage, which is only applicable in the full mode. The test stage evaluates the performance
+        of the classification with the selected K features.
+
+        Args:
+            data (dict): A dictionary containing the dataset information.
+            features (np.ndarray): A NumPy array containing the selected K features.
+        """
         log_service.log('Info', f'[Executor] : ********************* Test *********************')
 
         # Execute classification service
@@ -171,6 +230,14 @@ class Executor:
     # STAGE 4 (full mode only) - Execute benchmarks  on test set (each method will define the best K features #
     ###########################################################################################################
     def execute_benchmarks(self, data: dict, k: int):
+        """
+        Execute the benchmarks stage, which is only applicable in the full mode. This stage evaluates the performance
+        of various feature selection methods and compares them against the algorithm's performance.
+
+        Args:
+            data (dict): A dictionary containing the dataset information.
+            k (int): An integer representing the number of selected features.
+        """
         log_service.log('Info', f'[Executor] : ********************* Bench Marks *********************')
 
         y = data['Test'][2]
