@@ -1,4 +1,5 @@
 import time
+import random
 import numpy as np
 import pandas as pd
 from config import config
@@ -35,6 +36,7 @@ class DataService:
 
         results['Features'] = self.get_features(results['Train'][1])
         results['Labels'] = self.get_labels(results['Train'][2])
+        results['Costs'] = self.generate_feature_costs(results['Features'])
 
         end = time.time()
         log_service.log('Info', f'[Data Service] : Data set path: ({self.data_set_path}.csv) *'
@@ -54,7 +56,7 @@ class DataService:
         Returns:
             pd.DataFrame: Processed data as a data frame.
         """
-        df = pd.DataFrame(pd.read_csv(f'./Model/Datasets/{data_set}.csv'))
+        df = pd.DataFrame(pd.read_csv(data_set))
         return df
 
     def normalize_features(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -76,6 +78,23 @@ class DataService:
         X.columns = column_names
 
         return X
+
+    @staticmethod
+    def generate_feature_costs(features: pd.DataFrame) -> dict:
+        """
+        Generate costs for each feature in the given range.
+
+        Args:
+            features (pd.DataFrame): Feature names of the given data set.
+
+        Returns:
+            dict: A dictionary containing the costs of each feature.
+        """
+        feature_costs = {}
+        for feature in features:
+            feature_costs[feature] = random.uniform(0, 2)
+
+        return feature_costs
 
     def train_test_split(self, df: pd.DataFrame) -> tuple:
         """
