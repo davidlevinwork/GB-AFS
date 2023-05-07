@@ -46,7 +46,7 @@ class DataService:
     @staticmethod
     def load_data(data_set: str) -> pd.DataFrame:
         """
-        Load data.
+        Load the data.
 
         Args:
             data_set (str): Dataset name
