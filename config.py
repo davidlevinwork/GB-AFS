@@ -4,6 +4,15 @@ from dataclasses import dataclass
 
 
 @dataclass
+class Plots:
+    t_sne: bool
+    silhouette: bool
+    clustering: bool
+    clustering_based_jm: bool
+    accuracy_to_silhouette: bool
+
+
+@dataclass
 class DatasetConfig:
     dataset_path: str
     train_test_split: str
@@ -34,6 +43,7 @@ class Config:
     k_fold: KFoldConfig
     t_sne: TSNEConfig
     k_medoids: KMedoidsConfig
+    plots: Plots
 
 
 def from_dict(data: Dict[str, Any]) -> Config:
@@ -41,13 +51,15 @@ def from_dict(data: Dict[str, Any]) -> Config:
     k_fold = KFoldConfig(**data['k_fold'])
     t_sne = TSNEConfig(**data['t_sne'])
     k_medoids = KMedoidsConfig(**data['k_medoids'])
+    plots = Plots(**data['plots'])
 
     return Config(
         mode=data['mode'],
         dataset=dataset,
         k_fold=k_fold,
         t_sne=t_sne,
-        k_medoids=k_medoids
+        k_medoids=k_medoids,
+        plots=plots
     )
 
 
@@ -69,4 +81,3 @@ def load_yaml_config(file_path: str) -> Config:
 
 # Load and parse the YAML configuration file
 config = load_yaml_config('config.yaml')
-

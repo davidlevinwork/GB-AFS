@@ -1,27 +1,24 @@
-# Determines the run mode for the algorithm
-#   Options:
-#     1. basic: Runs the GB-AFS model only (finds the features subset)
-#     2. full: Runs the GB-AFS model in proof of concept configuration (includeing: classification, full plots, benchamrks and results comparison)
 mode: full
 
+plots:
+  t_sne: true
+  silhouette: true
+  clustering: true
+  clustering_based_jm: true
+  accuracy_to_silhouette: true
+
 dataset:
-  # Relative path
-  dataset_path: .\Cardiotocography
-  # "%d-%d" format
+  dataset_path: ./Model/Datasets/Cardiotocography.csv
   train_test_split: 75-25
-  # The name of the column containing the data labels
   label_column_str: class
 
 k_fold:
-  n_splits: 5
-  shuffle: True
+  n_splits: 2
+  shuffle: true
 
 t_sne:
   n_iter: 1000
-  # The perplexity value must be LOWER than the number of the features in the given data set
   perplexity: 15
 
 k_medoids:
-  # The options are: {‘alternate’, ‘pam’}. 
-  # Which algorithm to use. ‘alternate’ is faster while ‘pam’ is more accurate. 
   method: pam

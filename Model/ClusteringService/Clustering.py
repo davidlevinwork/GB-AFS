@@ -48,9 +48,13 @@ class ClusteringService:
                     log_service.log('Error', f'[Clustering Service] : Error in clustering task: {e}')
 
         results = self.arrange_results(results)
-        visualization_service.plot_silhouette(results, stage, fold_index)
-        visualization_service.plot_clustering(F, results, stage, fold_index)
-        visualization_service.plot_upgrade_clustering(F, results, stage, fold_index)
+
+        if config.plots.silhouette:
+            visualization_service.plot_silhouette(results, stage, fold_index)
+        if config.plots.clustering:
+            visualization_service.plot_clustering(F, results, stage, fold_index)
+        if config.plots.clustering_based_jm:
+            visualization_service.plot_clustering_based_jm(F, results, stage, fold_index)
 
         end = time.time()
         log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end - start, 3)}]')

@@ -23,5 +23,36 @@ Make sure to fill in the ***config.yaml*** file before running the main script:
 python3 main.py
 ```
 
+## Configuration File Explanation
+This section provides explanations for each parameter in the configuration file. 
+### *mode*
+Determines the run mode for the algorithm. There are two options:
+- `basic`: Runs the GB-AFS model only (finds the features' subset)
+- `full`: Runs the GB-AFS model in proof of concept configuration (including classification, full plots, benchmarks, and results comparison)
+### *plots*
+Determines the output visualizations provided to the user.
+- `t_sne`: A graph illustrating feature space separation capabilities after dimension reduction
+- `silhouette`: A graph depicting silhouette values as a function of K, showcasing the advantages of the MSS index ('basic' mode displays only MSS)
+- `clustering`: A series of graphs for each K value in the range [2, Number of features] representing clusters in the new feature space using distinct colors
+- `clustering_based_jm`: A series of graphs for each K value in the range [2, Number of features] representing clusters in the new feature space, with colors based on average JM values
+- `accuracy_to_silhouette`: A graph showing the correlation between accuracy and MSS values for all K values ('basic' mode does not display accuracy)
+### *dataset*
+Dataset-related parameters.
+- `dataset_path`: Relative path to the dataset file
+- `train_test_split`: Format "%d-%d" to specify the train-test split ratio
+- `label_column_str`: The name of the column containing the data labels
+### *k_fold*
+K-fold cross-validation settings.
+- `n_splits`: Number of splits for k-fold cross-validation
+- `shuffle`: Whether to shuffle the data before splitting it into folds
+### *t_sne*
+t-SNE algorithm settings.
+- `n_iter`: Number of iterations for optimization
+- `perplexity`: The perplexity value must be LOWER than the number of features in the given dataset
+### *k_medoids*
+K-Medoids algorithm settings.
+- `method`: The algorithm to use. Options are `alternate` (faster) or `pam` (more accurate)
+
+
 ## Support
 If you find this repository useful, we would appreciate it if you could give it a STAR. Your support helps us to continue improving the model and its implementation.

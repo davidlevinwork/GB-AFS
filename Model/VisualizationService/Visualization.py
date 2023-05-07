@@ -154,9 +154,9 @@ class VisualizationService:
         except AssertionError as ex:
             log_service.log('Error', f'[Visualization Service] - Failed to plot clustering graph. Error: [{ex}]')
 
-    def plot_upgrade_clustering(self, F: pd.DataFrame, clustering_results: list, stage: str, fold_index: int):
+    def plot_clustering_based_jm(self, F: pd.DataFrame, clustering_results: list, stage: str, fold_index: int):
         """
-        Plot clustering visualization with upgraded features.
+        Plot clustering visualization based on JM average.
 
         Args:
             F (pd.DataFrame): The data frame containing feature values.
@@ -189,7 +189,7 @@ class VisualizationService:
 
                 plt.legend()
                 plt.tight_layout()
-                self.save_plot(plt, stage, 'U-Clustering', f'{fold_index}', f'Clustering for K={K}')
+                self.save_plot(plt, stage, 'JM Based Clustering', f'{fold_index}', f'Clustering for K={K}')
                 plt.close()
 
         except AssertionError as ex:
