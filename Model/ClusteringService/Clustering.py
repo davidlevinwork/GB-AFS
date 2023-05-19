@@ -13,134 +13,130 @@ from Model.ClusteringService.Silhouette import optimized_simplified_silhouette
 
 
 class ClusteringService:
-    def execute_clustering_service(self, F: np.ndarray, K_values: list, stage: str, fold_index: int,
-                                   max_workers=None) -> list:
+    def __init__(self, max_workers: int = None):
+        self.max_workers = max_workers or min(32, os.cpu_count() + 4)
+
+    def run(self, feature_matrix: np.ndarray, k_values: list, stage: str, fold_index: int) -> list:
         """
-        This function executes the clustering service for the given low-dimensional feature matrix, list of K values,
-        stage, and fold index.
+        Execute the clustering service for the given feature matrix and K values.
 
         Args:
-            F (np.ndarray): The low-dimensional feature matrix.
-            K_values (list): A list of K values to test.
+            feature_matrix (np.ndarray): The low-dimensional feature matrix.
+            k_values (list): A list of K values to test.
             stage (str): The stage of the algorithm ('Train', 'Full Train', 'Test').
             fold_index (int): The index of the given k-fold (used for saving results & plots).
-            max_workers (int, optional): The maximum number of workers for the ThreadPoolExecutor.
-                                         Defaults to min(32, os.cpu_count() + 4).
 
         Returns:
             list: A list of tuples containing clustering and silhouette results for each K value.
         """
-        start = time.time()
+        start_time = time.time()
 
-        if max_workers is None:
-            max_workers = min(32, os.cpu_count() + 4)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            tasks = [executor.submit(self._execute_clustering, feature_matrix, k) for k in k_values]
+            results = [task.result() for task in concurrent.futures.as_completed(tasks)]
 
-        results = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit a task for each K value
-            tasks = [executor.submit(self.execute_clustering, F, K) for K in K_values]
-
-            # Wait for the tasks to complete and store the results
-            for task in concurrent.futures.as_completed(tasks):
-                try:
-                    results.append(task.result())
-                except Exception as e:
-                    log_service.log('Error', f'[Clustering Service] : Error in clustering task: {e}')
-
-        results = self.arrange_results(results)
+        results = self._arrange_results(results)
 
         if config.plots.silhouette:
             visualization_service.plot_silhouette(results, stage, fold_index)
         if config.plots.clustering:
-            visualization_service.plot_clustering(F, results, stage, fold_index)
+            visualization_service.plot_clustering(feature_matrix, results, stage, fold_index)
         if config.plots.clustering_based_jm:
-            visualization_service.plot_clustering_based_jm(F, results, stage, fold_index)
+            visualization_service.plot_clustering_based_jm(feature_matrix, results, stage, fold_index)
 
-        end = time.time()
-        log_service.log('Debug', f'[Clustering Service] : Total run time in seconds: [{round(end - start, 3)}]')
+        end_time = time.time()
+        log_service.log('Debug', f'[Clustering Service] : '
+                                 f'Total run time in seconds: [{round(end_time - start_time, 3)}]')
         return results
 
     @staticmethod
-    def execute_clustering(F: pd.DataFrame, K: int) -> dict:
+    def _execute_clustering(feature_matrix: pd.DataFrame, k: int) -> dict:
         """
-        This function executes the K-Medoid clustering algorithm for the given low-dimensional feature matrix and
-        K value.
+        Execute K-Medoid clustering for the given feature matrix and K value.
 
         Args:
-            F (pd.DataFrame): The low-dimensional feature matrix.
-            K (int): The number of clusters.
+            feature_matrix (pd.DataFrame): The low-dimensional feature matrix.
+            k (int): The number of clusters.
 
         Returns:
             dict: A dictionary containing K-Medoids and silhouette results for the given K.
         """
-        results = {}
+        kmedoids_result = ClusteringService._run_kmedoids(feature_matrix, k)
+        silhouette_result = ClusteringService._calculate_silhouette_value(
+            X=feature_matrix,
+            labels=kmedoids_result['Labels'],
+            centroids=kmedoids_result['Centroids']
+        )
 
-        results['K'] = K
-        results['Kmedoids'] = ClusteringService.run_kmedoids(F, K)
-        results['Silhouette'] = ClusteringService.calculate_silhouette_value(X=F,
-                                                                             y=results['Kmedoids']['Labels'],
-                                                                             centroids=results['Kmedoids']['Centroids'])
-        return results
+        return {
+            'K': k,
+            'Kmedoids': kmedoids_result,
+            'Silhouette': silhouette_result
+        }
 
     @staticmethod
-    def run_kmedoids(F: pd.DataFrame, K: int, init: str = 'k-medoids++') -> dict:
+    def _run_kmedoids(feature_matrix: pd.DataFrame, k: int, init: str = 'k-medoids++') -> dict:
         """
-        This function performs K-medoids clustering on the given feature matrix and K value. It also accepts optional
-         arguments for the method and initialization of medoids.
+        Perform K-medoids clustering on the given feature matrix
 
         Args:
-            F (pd.DataFrame): The reduced feature similarity matrix.
-            K (int): The number of clusters.
+            feature_matrix (pd.DataFrame): The reduced feature similarity matrix.
+            k (int): The number of clusters.
             init (str, optional): The medoid initialization method ('random', 'heuristic', 'k-medoids++', 'build').
                                   Defaults to 'k-medoids++'.
 
         Returns:
             dict: A dictionary containing cluster labels and centroids.
         """
-        kmedoids = KMedoids(init=init,
-                            n_clusters=K,
-                            method=config.k_medoids.method).fit(F)
-        results = {
+        kmedoids = KMedoids(init=init, n_clusters=k, method=config.k_medoids.method).fit(feature_matrix)
+
+        return {
             'Labels': kmedoids.labels_,
             'Features': kmedoids.medoid_indices_,
             'Centroids': kmedoids.cluster_centers_
         }
-        return results
 
     @staticmethod
-    def calculate_silhouette_value(X: pd.DataFrame, y: pd.DataFrame, centroids: array) -> dict:
+    def _calculate_silhouette_value(X: pd.DataFrame, labels: pd.DataFrame, centroids: array) -> dict:
         """
-        This function calculates silhouette values for the given dataset, labels, and centroids.
+        Calculate silhouette values for the given dataset, labels, and centroids.
 
         Args:
             X (pd.DataFrame): The dataset.
-            y (pd.DataFrame): The labels of the given dataset.
+            labels (pd.DataFrame): The labels of the given dataset.
             centroids (array): The centroids of the given dataset (depending on the K value).
 
         Returns:
             dict: A dictionary containing silhouette values.
         """
         silhouette_results = {}
+
         if config.mode == "full":
-            silhouette_results['Silhouette'] = silhouette_score(X=X, labels=y)
-            silhouette_results['SS'] = optimized_simplified_silhouette(X=X,
-                                                                       labels=y,
-                                                                       centroids=centroids,
-                                                                       mode='regular',
-                                                                       norm_type='min',
-                                                                       regularization='L0',
-                                                                       eta=1.0)
-        silhouette_results['MSS'] = optimized_simplified_silhouette(X=X,
-                                                                    labels=y,
-                                                                    centroids=centroids,
-                                                                    mode='heuristic',
-                                                                    norm_type='mean',
-                                                                    regularization='L0',
-                                                                    eta=1.0)
+            silhouette_results['Silhouette'] = silhouette_score(X=X, labels=labels)
+            silhouette_results['SS'] = optimized_simplified_silhouette(
+                X=X,
+                labels=labels,
+                centroids=centroids,
+                mode='regular',
+                norm_type='min',
+                regularization='L0',
+                eta=1.0
+            )
+
+        silhouette_results['MSS'] = optimized_simplified_silhouette(
+            X=X,
+            labels=labels,
+            centroids=centroids,
+            mode='heuristic',
+            norm_type='mean',
+            regularization='L0',
+            eta=1.0
+        )
+
         return silhouette_results
 
     @staticmethod
-    def arrange_results(results: list) -> list:
+    def _arrange_results(results: list) -> list:
         """
         This function sorts the input clustering and silhouette results by the K value and logs the silhouette values.
 
@@ -151,11 +147,10 @@ class ClusteringService:
             list: A sorted list of results by the K value.
         """
         sorted_results = sorted(results, key=lambda x: x['K'])
+
         for result in sorted_results:
             k = result['K']
-            sil_log_str = ''
-            for sil_name, sil_value in result['Silhouette'].items():
-                sil_log_str += f'({sil_name}) - ({"%.4f" % sil_value}), '
-            log_service.log('Info', f'[Clustering Service] : Silhouette values for (K={k}) * {sil_log_str[:-2]}')
+            silhouette_values = ', '.join(f'({name}) - ({"%.4f" % value})' for name, value in result['Silhouette'].items())
+            log_service.log('Info', f'[Clustering Service] : Silhouette values for (K={k}) * {silhouette_values}')
 
         return sorted_results

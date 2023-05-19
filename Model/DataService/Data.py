@@ -23,30 +23,32 @@ class DataService:
             dict: A dictionary that contains all the relevant information of the given data set.
                   Keys include 'Dataset', 'N. Dataset', 'Train', 'Test', 'Features', and 'Labels'.
         """
-        start = time.time()
+        start_time = time.time()
 
-        results = {}
+        dataset = self._load_data(self.data_set_path)
+        normalized_dataset = self._normalize_features(dataset)
 
-        results['Dataset'] = self.load_data(self.data_set_path)
-        results['N. Dataset'] = self.normalize_features(results['Dataset'])
+        train, test = self._train_test_split(normalized_dataset)
 
-        train, test = self.train_test_split(results['N. Dataset'])
-        results['Train'] = train
-        results['Test'] = test
+        results = {
+            'Dataset': dataset,
+            'N. Dataset': normalized_dataset,
+            'Train': train,
+            'Test': test,
+            'Features': self._get_features(train[1]),
+            'Labels': self._get_labels(train[2]),
+            'Costs': self._generate_feature_costs(self._get_features(train[1]))
+        }
 
-        results['Features'] = self.get_features(results['Train'][1])
-        results['Labels'] = self.get_labels(results['Train'][2])
-        results['Costs'] = self.generate_feature_costs(results['Features'])
-
-        end = time.time()
+        end_time = time.time()
         log_service.log('Info', f'[Data Service] : Data set path: ({self.data_set_path}.csv) *'
                                 f'Number of features: ({len(results["Features"])}) *'
                                 f' Number of labels: ({len(results["Labels"])})')
-        log_service.log('Debug', f'[Data Service] : Total run time in seconds: [{round(end - start, 3)}]')
+        log_service.log('Debug', f'[Data Service] : Total run time in seconds: [{round(end_time - start_time, 3)}]')
         return results
 
     @staticmethod
-    def load_data(data_set: str) -> pd.DataFrame:
+    def _load_data(data_set: str) -> pd.DataFrame:
         """
         Load the data.
 
@@ -56,10 +58,9 @@ class DataService:
         Returns:
             pd.DataFrame: Processed data as a data frame.
         """
-        df = pd.DataFrame(pd.read_csv(data_set))
-        return df
+        return pd.read_csv(data_set)
 
-    def normalize_features(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _normalize_features(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         Normalize the feature values to [0, 1] range.
 
@@ -69,18 +70,14 @@ class DataService:
         Returns:
             pd.DataFrame: Normalized input data.
         """
-        column_names = X.columns
         cols_to_normalize = X.columns.difference([self.label_column])
-
         scaler = MinMaxScaler()
-
         X[cols_to_normalize] = scaler.fit_transform(X[cols_to_normalize])
-        X.columns = column_names
 
         return X
 
     @staticmethod
-    def generate_feature_costs(features: pd.DataFrame) -> dict:
+    def _generate_feature_costs(features: pd.DataFrame) -> dict:
         """
         Generate costs for each feature in the given range.
 
@@ -90,13 +87,9 @@ class DataService:
         Returns:
             dict: A dictionary containing the costs of each feature.
         """
-        feature_costs = {}
-        for feature in features:
-            feature_costs[feature] = random.uniform(0, 2)
+        return {feature: random.uniform(0, 2) for feature in features}
 
-        return feature_costs
-
-    def train_test_split(self, df: pd.DataFrame) -> tuple:
+    def _train_test_split(self, df: pd.DataFrame) -> tuple:
         """
         Split data into train and test sets.
 
@@ -116,7 +109,7 @@ class DataService:
         return (train, X_train, y_train), (test, X_test, y_test)
 
     @staticmethod
-    def get_features(X: pd.DataFrame) -> pd.DataFrame:
+    def _get_features(X: pd.DataFrame) -> pd.DataFrame:
         """
         Extract feature names.
 
@@ -128,7 +121,7 @@ class DataService:
         """
         return X.columns
 
-    def get_labels(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _get_labels(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         Extract label names.
 
@@ -138,8 +131,7 @@ class DataService:
         Returns:
             pd.DataFrame: Label names of the given data set.
         """
-        labels_names = X[self.label_column].unique()
-        return labels_names
+        return X[self.label_column].unique()
 
     def k_fold_split(self, data: pd.DataFrame, train_index: np.ndarray, val_index: np.ndarray) -> tuple:
         """

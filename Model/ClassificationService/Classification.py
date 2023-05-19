@@ -10,23 +10,24 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
-
 NUMBER_OF_TEST_EPOCHS = 1
 NUMBER_OF_TRAIN_EPOCHS = 10
 
 
 class ClassificationService:
     def __init__(self):
-        self.classifiers = [tree.DecisionTreeClassifier(),
-                            KNeighborsClassifier(n_neighbors=5),
-                            RandomForestClassifier()]
+        self.classifiers = [
+            tree.DecisionTreeClassifier(),
+            KNeighborsClassifier(n_neighbors=5),
+            RandomForestClassifier()
+        ]
         self.cv = KFold(n_splits=10, shuffle=True)
 
     def classify(self, mode: str, data: dict, feature_matrix: np.ndarray, clustering_results: list, feature_names: list,
                  k_values: list) -> dict:
         """
-        This function trains and validates the classification models using the provided data, feature matrix,
-        clustering results, features, and K values. The function supports two modes: 'Train' and 'Full Train'.
+    Train and validate the classification models using the provided data, feature matrix, clustering results, features,
+    and K values.
 
         Args:
             mode (str): The mode of the classification service, either 'Train' or 'Full Train'.
@@ -46,35 +47,29 @@ class ClassificationService:
             raise ValueError("Invalid mode. Allowed values are 'Train' and 'Full Train'.")
 
         if mode == 'Train':
-            # Train
-            X_train, y_train = data['Train'][0], data['Train'][1]
-            train_results = self.execute_classification_service(X_train, y_train, feature_matrix, clustering_results,
-                                                                feature_names, k_values, 'Train')
-
-            # Validation
-            X_validation, y_validation = data['Validation'][0], data['Validation'][1]
-            validation_results = self.execute_classification_service(X_validation, y_validation, feature_matrix,
-                                                                     clustering_results, feature_names, k_values,
-                                                                     'Validation')
-
+            train_results = self._run(
+                data['Train'][0], data['Train'][1], feature_matrix, clustering_results, feature_names, k_values, 'Train'
+            )
+            validation_results = self._run(
+                data['Validation'][0], data['Validation'][1], feature_matrix, clustering_results, feature_names,
+                k_values, 'Validation'
+            )
             results = {"Train": train_results, "Validation": validation_results}
 
         elif mode == 'Full Train':
-            # (All) Train
-            X_train, y_train = data['Train'][0], data['Train'][1]
-            train_results = self.execute_classification_service(X_train, y_train, feature_matrix, clustering_results,
-                                                                feature_names, k_values, 'Full Train')
-
+            train_results = self._run(
+                data['Train'][0], data['Train'][1], feature_matrix, clustering_results, feature_names,
+                k_values, 'Full Train'
+            )
             results = {"Train": train_results}
 
         return results
 
-    def execute_classification_service(self, X: pd.DataFrame, y: pd.DataFrame, feature_matrix: np.ndarray,
-                                       clustering_results: list, feature_names: list, k_values: list,
-                                       mode: str) -> dict:
+    def _run(self, X: pd.DataFrame, y: pd.DataFrame, feature_matrix: np.ndarray, clustering_results: list,
+             feature_names: list, k_values: list, mode: str) -> dict:
         """
-        This function runs the classification service for the given data, feature matrix, clustering results,
-        features, and K values in the specified mode.
+        Run the classification service for the given data, feature matrix, clustering results, features, and K values
+        in the specified mode.
 
         Args:
             X (pd.DataFrame): The input data as a DataFrame.
@@ -94,7 +89,7 @@ class ClassificationService:
         if mode == 'Train' or mode == 'Validation':
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 # Submit a task for each K value
-                tasks = [executor.submit(self.execute_classification, X, y, feature_matrix,
+                tasks = [executor.submit(self._execute_classification, X, y, feature_matrix,
                                          clustering_results[K - 2], feature_names, K, mode)
                          for K in k_values]
 
@@ -105,7 +100,7 @@ class ClassificationService:
             for K in k_values:
                 K_clustering = [x for x in clustering_results if x['K'] == K][0]
                 evaluations.append(
-                    self.execute_classification(X, y, feature_matrix, K_clustering, feature_names, K, mode)
+                    self._execute_classification(X, y, feature_matrix, K_clustering, feature_names, K, mode)
                 )
 
         evaluations = self.arrange_results(evaluations)
@@ -116,8 +111,8 @@ class ClassificationService:
 
         return evaluations
 
-    def execute_classification(self, X: pd.DataFrame, y: pd.DataFrame, feature_matrix: np.ndarray,
-                               clustering_results: dict, feature_names: list, K: int, mode: str) -> dict:
+    def _execute_classification(self, X: pd.DataFrame, y: pd.DataFrame, feature_matrix: np.ndarray,
+                                clustering_results: dict, feature_names: list, K: int, mode: str) -> dict:
         """
         This function executes the classification for the given data, feature matrix, clustering results, features,
         and K value in the specified mode.
@@ -134,7 +129,7 @@ class ClassificationService:
         Returns:
             dict: A dictionary containing the classification results for the current K value.
         """
-        new_X = self.prepare_data(X, feature_matrix, clustering_results['Kmedoids']['Centroids'], feature_names)
+        new_X = self._prepare_data(X, feature_matrix, clustering_results['Kmedoids']['Centroids'], feature_names)
         evaluation = self.evaluate(new_X, y, K, mode)
 
         log_service.log('Debug', f'[Classification Service] - Finished executing classification for {K} '
@@ -143,11 +138,10 @@ class ClassificationService:
         return evaluation
 
     @staticmethod
-    def prepare_data(X: pd.DataFrame, feature_matrix: np.ndarray, centroids: np.ndarray,
-                     feature_names: list) -> pd.DataFrame:
+    def _prepare_data(X: pd.DataFrame, feature_matrix: np.ndarray, centroids: np.ndarray,
+                      feature_names: list) -> pd.DataFrame:
         """
-        This function prepares the input data by selecting the relevant features based on the provided feature matrix
-        and centroids.
+        Prepare the input data by selecting the relevant features based on the provided feature matrix and centroids.
 
         Args:
             X (pd.DataFrame): The input data as a DataFrame.
@@ -166,8 +160,8 @@ class ClassificationService:
 
     def evaluate(self, X: pd.DataFrame, y: pd.DataFrame, K: int, mode: str) -> dict:
         """
-        This function evaluates the classification models using the prepared input data and target labels for the
-        specified K value and mode. The evaluation metrics include accuracy, F1-score, and AUC (both 'ovo' and 'ovr').
+        Evaluate the classification models using the prepared input data and target labels for the specified K value
+        and mode.
 
         Args:
             X (pd.DataFrame): The prepared input data as a DataFrame.
@@ -231,11 +225,9 @@ class ClassificationService:
         Returns:
             dict: A dictionary containing the arranged classification results.
         """
-        sorted_results = results
-
         arranged_results = {
             'Results By K': sorted(results, key=lambda x: x['K']),
-            'Results By Classifiers': self.arrange_results_by_classifier(sorted_results),
+            'Results By Classifiers': self._arrange_results_by_classifier(results),
             'Results By F1': sorted(results, key=lambda x: sum(x['F1'].values()) / len(x['F1']), reverse=True),
             'Results By AUC-ovo': sorted(results, key=lambda x: sum(x['AUC-ovo'].values()) / len(x['AUC-ovo']),
                                          reverse=True),
@@ -247,9 +239,10 @@ class ClassificationService:
         return arranged_results
 
     @staticmethod
-    def arrange_results_by_classifier(results: list) -> dict:
+    def _arrange_results_by_classifier(results: list) -> dict:
         """
-        This function arranges the classification results by classifiers.
+        Arrange the classification results in various ways, such as by K, classifiers, F1-score, AUC ('ovo' and 'ovr'),
+        and accuracy.
 
         Args:
             results (list): A list of classification results.

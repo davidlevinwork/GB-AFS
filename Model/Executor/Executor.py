@@ -9,11 +9,20 @@ from Model.ClassificationService import Classification
 from Model.FeatureSimilarityService import FeatureSimilarity
 from Model.DimensionReductionService import DimensionReduction
 from Model.VisualizationService.Visualization import visualization_service
-from Model.utils import compile_train_results, find_knees, select_k_best_features, summarize_final_results
+from Model.utils import (
+    compile_train_results,
+    find_knees,
+    select_k_best_features,
+    summarize_final_results,
+    set_cost_to_clustering
+)
 
 
 class Executor:
     def __init__(self):
+        self.k_fold = KFold(n_splits=config.k_fold.n_splits,
+                            shuffle=config.k_fold.shuffle,
+                            random_state=42)
         self.data_service = Data.DataService()
         self.table_service = Table.TableService()
         self.clustering_service = Clustering.ClusteringService()
@@ -59,12 +68,24 @@ class Executor:
 
         train_results = self.execute_train(data)
         knees = find_knees(train_results)
-        K_values = list([knees['Interp1d']['Knee']])
+        K_values = [knees['Interp1d']['Knee']]
+        train_results['Clustering'] = set_cost_to_clustering(clustering_results=train_results['Clustering'],
+                                                             costs=data['Costs'])
+
+        self.plot_results(train_results, knees, 'Train')
+
+        return K_values
+
+    @staticmethod
+    def plot_results(train_results, knees, stage):
         visualization_service.plot_accuracy_to_silhouette(classification_res=train_results['Classification'],
                                                           clustering_res=train_results['Clustering'],
                                                           knees=knees,
-                                                          stage='Train')
-        return K_values
+                                                          stage=stage)
+
+        visualization_service.plot_costs_to_silhouette(clustering_res=train_results['Clustering'],
+                                                       knees=knees,
+                                                       stage=stage)
 
     def execute_train(self, data: dict) -> dict:
         """
@@ -79,11 +100,7 @@ class Executor:
         clustering_results = {}
         classification_results = {}
 
-        kf = KFold(n_splits=config.k_fold.n_splits,
-                   shuffle=config.k_fold.shuffle,
-                   random_state=42)
-
-        for i, (train_index, val_index) in enumerate(kf.split(data['Train'][0])):
+        for i, (train_index, val_index) in enumerate(self.k_fold.split(data['Train'][0])):
             log_service.log('Info', f'[Executor] : ******************** Fold Number #{i + 1} ********************')
 
             train, validation = self.data_service.k_fold_split(data=data['Train'][0],
@@ -138,10 +155,10 @@ class Executor:
                                                           fold_index=fold_index)
 
         # Execute clustering service (K-Medoid + Silhouette)
-        clustering_res = self.clustering_service.execute_clustering_service(F=F_reduced,
-                                                                            stage=stage,
-                                                                            K_values=K_values,
-                                                                            fold_index=fold_index)
+        clustering_res = self.clustering_service.run(feature_matrix=F_reduced,
+                                                     stage=stage,
+                                                     k_values=K_values,
+                                                     fold_index=fold_index)
 
         if "Validation" in data:
             fixed_data = {
