@@ -214,7 +214,7 @@ class VisualizationService:
                                                    len(clustering_res[0]['Silhouette']))]
 
             # Left Y axis (accuracy)
-            if config.mode == "full":
+            if config.mode == 'full' and config.plots.accuracy_to_silhouette is True:
                 for classifier, classifier_val in classification_res.items():
                     x_values = [*range(2, len(classification_res[classifier]) + 2, 1)]
                     label = VisualizationService.get_classifier_label(str(classifier))
@@ -254,6 +254,63 @@ class VisualizationService:
             self.save_plot(plt, stage, 'Accuracy', 'Final', 'Accuracy-Silhouette')
         except AssertionError as ex:
             log_service.log('Error', f'[Visualization Service] - Failed to plot accuracy graph. Error: [{ex}]')
+
+    def plot_costs_to_silhouette(self, clustering_res: list, knees: dict, stage: str):
+        """
+        Plot the accuracy to silhouette graph.
+
+        Args:
+            clustering_res (list): A list of clustering results.
+            knees (dict): The knee points.
+            stage (str): The stage of the process, e.g. 'Train' or 'Test'.
+        """
+        try:
+            plt.clf()
+            fig, ax = plt.subplots(figsize=(8, 6))
+
+            c_index = 0
+            colors = [cmap(i) for i in np.linspace(0, 1, len(clustering_res[0]['Costs']) + len(knees) +
+                                                   len(clustering_res[0]['Silhouette']))]
+
+            for cost_type in list(clustering_res[0]['Costs'].keys()):
+                k_values = [res['K'] for res in clustering_res]
+                cost_values = [res['Costs'][cost_type] for res in clustering_res]
+                ax.plot(k_values, cost_values, label=cost_type, linestyle="-.", c=colors[c_index])
+                c_index += 1
+
+            ax.set_xlabel("K value")
+            ax.set_ylabel("Cost")
+            ax.grid(True, linestyle='-.')
+            ax.spines['top'].set_visible(False)
+
+            # Right Y axis (silhouette)
+            ax2 = ax.twinx()
+            for sil_type in list(clustering_res[0]['Silhouette'].keys()):
+                k_values = [res['K'] for res in clustering_res]
+                sil_values = [res['Silhouette'][sil_type] for res in clustering_res]
+                ax2.plot(k_values, sil_values, label=sil_type, linestyle="solid", c=colors[c_index])
+                c_index += 1
+
+            # get handles and labels for both axes
+            handles1, labels1 = ax.get_legend_handles_labels()
+            handles2, labels2 = ax2.get_legend_handles_labels()
+            handles = handles1 + handles2
+            labels = labels1 + labels2
+
+            ax.legend(handles, labels, loc='lower left', bbox_to_anchor=(0, 1.02, 1, 0.2),
+                      ncol=4, shadow=True, fancybox=True)
+
+            # Knees
+            for knee, knee_values in knees.items():
+                ax2.axvline(x=knee_values['Knee'], linestyle='dotted', c='red')
+                ax2.text(knee_values['Knee'], 0.1, 'KNEE', rotation=90, color='red')
+
+            ax2.set_ylabel("Silhouette Value")
+            ax2.spines['top'].set_visible(False)
+
+            self.save_plot(plt, stage, 'Costs', 'Final', 'Cost-Silhouette')
+        except AssertionError as ex:
+            log_service.log('Error', f'[Visualization Service] - Failed to plot costs graph. Error: [{ex}]')
 
     @staticmethod
     def get_classifier_label(classifier):

@@ -15,6 +15,26 @@ from skfeature.function.similarity_based.fisher_score import fisher_score
 # Auxiliary functions for managing train results #
 ##################################################
 
+def set_cost_to_clustering(clustering_results: dict, costs: dict) -> dict:
+    """
+    Sets the cost to clustering results based on the given costs dictionary.
+
+    Args:
+        clustering_results (dict): A dictionary containing clustering results.
+        costs (dict): A dictionary containing costs associated with each medoid.
+
+    Returns:
+        dict: A modified clustering_results dictionary with the added 'Costs' key.
+    """
+    for result in clustering_results:
+        medoids = result['Kmedoids']['Features']
+        medoids_cost = sum([list(costs.values())[medoid] for medoid in medoids])
+
+        result['Costs'] = {'Original Cost': medoids_cost}
+
+    return clustering_results
+
+
 def compile_train_results(classification_results: dict, clustering_results: dict, n_folds: int) -> dict:
     """
     Create a dictionary that holds all the train results (classification & clustering).
