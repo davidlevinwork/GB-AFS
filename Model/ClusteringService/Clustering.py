@@ -1,8 +1,6 @@
 import os
 import time
 import numpy as np
-import pandas as pd
-from array import array
 from config import config
 import concurrent.futures
 from sklearn_extra.cluster import KMedoids
@@ -50,12 +48,12 @@ class ClusteringService:
         return results
 
     @staticmethod
-    def _execute_clustering(feature_matrix: pd.DataFrame, k: int) -> dict:
+    def _execute_clustering(feature_matrix: np.ndarray, k: int) -> dict:
         """
         Execute K-Medoid clustering for the given feature matrix and K value.
 
         Args:
-            feature_matrix (pd.DataFrame): The low-dimensional feature matrix.
+            feature_matrix (np.ndarray): The low-dimensional feature matrix.
             k (int): The number of clusters.
 
         Returns:
@@ -75,12 +73,12 @@ class ClusteringService:
         }
 
     @staticmethod
-    def _run_kmedoids(feature_matrix: pd.DataFrame, k: int, init: str = 'k-medoids++') -> dict:
+    def _run_kmedoids(feature_matrix: np.ndarray, k: int, init: str = 'k-medoids++') -> dict:
         """
         Perform K-medoids clustering on the given feature matrix
 
         Args:
-            feature_matrix (pd.DataFrame): The reduced feature similarity matrix.
+            feature_matrix (np.ndarray): The reduced feature similarity matrix.
             k (int): The number of clusters.
             init (str, optional): The medoid initialization method ('random', 'heuristic', 'k-medoids++', 'build').
                                   Defaults to 'k-medoids++'.
@@ -97,14 +95,14 @@ class ClusteringService:
         }
 
     @staticmethod
-    def _calculate_silhouette_value(X: pd.DataFrame, labels: pd.DataFrame, centroids: array) -> dict:
+    def _calculate_silhouette_value(X: np.ndarray, labels: np.ndarray, centroids: np.ndarray) -> dict:
         """
         Calculate silhouette values for the given dataset, labels, and centroids.
 
         Args:
-            X (pd.DataFrame): The dataset.
-            labels (pd.DataFrame): The labels of the given dataset.
-            centroids (array): The centroids of the given dataset (depending on the K value).
+            X (np.ndarray): The dataset.
+            labels (np.ndarray): The labels of the given dataset.
+            centroids (np.ndarray): The centroids of the given dataset (depending on the K value).
 
         Returns:
             dict: A dictionary containing silhouette values.
@@ -119,8 +117,6 @@ class ClusteringService:
                 centroids=centroids,
                 mode='regular',
                 norm_type='min',
-                regularization='L0',
-                eta=1.0
             )
 
         silhouette_results['MSS'] = optimized_simplified_silhouette(
@@ -129,8 +125,6 @@ class ClusteringService:
             centroids=centroids,
             mode='heuristic',
             norm_type='mean',
-            regularization='L0',
-            eta=1.0
         )
 
         return silhouette_results

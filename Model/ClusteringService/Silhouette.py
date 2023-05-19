@@ -2,7 +2,8 @@ import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 
 
-def optimized_simplified_silhouette(X, labels, centroids, mode, norm_type, regularization, eta) -> np.ndarray:
+def optimized_simplified_silhouette(X: np.ndarray, labels: np.ndarray, centroids: np.ndarray, mode: str,
+                                    norm_type: str) -> np.ndarray:
     """
     Compute the optimized simplified silhouette score for a set of data points, labels, and centroids.
 
@@ -12,8 +13,6 @@ def optimized_simplified_silhouette(X, labels, centroids, mode, norm_type, regul
         centroids (np.ndarray): The cluster centroids with shape (n_clusters, n_features).
         mode (str): The mode for silhouette computation, either 'heuristic' or 'regular'.
         norm_type (str): The type of normalization to use for distances to other centroids, either 'min' or 'mean'.
-        regularization (str): The type of regularization to apply, either 'L1', 'L2', or 'none'.
-        eta (float): The regularization coefficient.
 
     Returns:
         float: The mean optimized simplified silhouette score.
@@ -35,17 +34,7 @@ def optimized_simplified_silhouette(X, labels, centroids, mode, norm_type, regul
         a = a[mask]
         b = b[mask]
 
-    numerator = b - a
-    denominator = np.maximum(a, b)
-
-    if regularization == 'L1':
-        denominator = np.maximum(a * eta, b * eta)
-    elif regularization == 'L2':
-        regularization_term = eta * (a ** 2)
-    else:
-        regularization_term = 0
-
-    sil_values = numerator / denominator + regularization_term
+    sil_values = (b - a) / (np.maximum(a, b))
 
     if mode == 'regular':
         sil_values[sil_values == 1] = 0
